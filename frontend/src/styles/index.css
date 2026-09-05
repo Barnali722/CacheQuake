@@ -1,0 +1,87 @@
+/* styles/index.css
+ * Global CSS resets and design tokens.
+ * Component-level styles go in their own files (Day 2+).
+ */
+
+/* ── Google Fonts ───────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Design Tokens ───────────────────────────────────────────────── */
+:root {
+  /* Colors */
+  --color-bg-base:       #0f0f14;
+  --color-bg-surface:    #13131c;
+  --color-bg-elevated:   #1a1a28;
+  --color-border:        #2a2a3a;
+  --color-text-primary:  #e0e0f0;
+  --color-text-secondary:#aaaacc;
+  --color-text-muted:    #666680;
+
+  /* Accent colors */
+  --color-accent-primary: #7b8cff;  /* live controls, active states */
+  --color-accent-live:    #3dffa0;  /* LIVE badge, alive tokens */
+  --color-accent-needle:  #ff6b6b;  /* needle token highlight */
+  --color-accent-precomp: #f5a623;  /* PrecomputedBadge orange */
+  --color-accent-correct: #3dffa0;
+  --color-accent-wrong:   #ff6b6b;
+
+  /* Typography */
+  --font-ui:   'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Spacing */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+}
+
+/* ── Reset ───────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Placeholder styles (Day 1 skeleton) ──────────────────────────── */
+/* Remove on Day 2 when real components are wired */
+[id$="-panel"] > div:first-child,
+[id$="-module"] > div:first-child,
+[id$="-chart"] > div:first-child,
+[id$="-heatmap"] > div:first-child,
+[id$="-check"] > div:first-child,
+[id="sandbox"] > div:first-child,
+[id="guided-walkthrough"] > div:first-child,
+[id="app-shell"] > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  background: var(--color-bg-surface);
+  min-height: 60px;
+}

@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Memory Under Pressure — Wireframe</title>
+  <style>
+    /* ── Reset & Base ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Courier New', Courier, monospace;
+      background: #0f0f14;
+      color: #c8c8d8;
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ── Wireframe annotation style ─────────────────────────────────── */
+    .annotation {
+      font-size: 11px;
+      color: #f5a623;
+      border-left: 3px solid #f5a623;
+      padding: 3px 8px;
+      margin-top: 6px;
+      background: rgba(245,166,35,0.06);
+    }
+    .region-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .badge-precomputed {
+      display: inline-block;
+      background: #2d1f00;
+      border: 1px solid #f5a623;
+      color: #f5a623;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .badge-live {
+      display: inline-block;
+      background: #001f0f;
+      border: 1px solid #3dffa0;
+      color: #3dffa0;
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 3px;
+      margin-left: 6px;
+      vertical-align: middle;
+    }
+    .placeholder-box {
+      border: 1px dashed #444;
+      border-radius: 6px;
+      padding: 12px;
+      background: #13131a;
+    }
+    .vs-divider {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      color: #555;
+      font-size: 11px;
+    }
+    .vs-divider::before, .vs-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #333;
+    }
+
+    /* ── Layout ─────────────────────────────────────────────────────── */
+    .app-shell {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      grid-template-columns: 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Top bar ──────────────────────────────────────────────────── */
+    .top-bar {
+      background: #16161f;
+      border-bottom: 1px solid #2a2a3a;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .top-bar h1 {
+      font-size: 15px;
+      color: #e0e0f0;
+      font-weight: bold;
+      letter-spacing: 0.04em;
+    }
+    .top-bar .claim-pill {
+      background: #1e1e2e;
+      border: 1px solid #333;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 10px;
+      max-width: 600px;
+      color: #aaa;
+    }
+
+    /* ── Guided Walkthrough Banner ───────────────────────────────── */
+    .walkthrough-banner {
+      background: #1a1a28;
+      border-bottom: 1px solid #2a2a44;
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .walkthrough-step-indicator {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .step-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #666;
+    }
+    .step-dot.active {
+      border-color: #7b8cff;
+      color: #7b8cff;
+      background: rgba(123,140,255,0.1);
+    }
+    .step-dot.done {
+      border-color: #3dffa0;
+      color: #3dffa0;
+      background: rgba(61,255,160,0.07);
+    }
+    .walkthrough-narration {
+      flex: 1;
+      border: 1px dashed #3a3a5a;
+      border-radius: 5px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: #bbb;
+      background: #12121c;
+    }
+    .walkthrough-nav {
+      display: flex;
+      gap: 8px;
+    }
+    .wf-btn {
+      border: 1px solid #444;
+      background: #1e1e2e;
+      color: #ccc;
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 12px;
+      cursor: default;
+    }
+    .wf-btn.primary { border-color: #7b8cff; color: #7b8cff; }
+
+    /* ── Main content grid ───────────────────────────────────────── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 280px 1fr 300px;
+      gap: 0;
+      height: calc(100vh - 120px);
+      overflow: hidden;
+    }
+
+    /* ── Control Panel (left column) ──────────────────────────── */
+    .control-panel {
+      background: #13131c;
+      border-right: 1px solid #2a2a3a;
+      padding: 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    .ctrl-section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #7b8cff;
+      margin-bottom: 10px;
+      border-bottom: 1px solid #2a2a44;
+      padding-bottom: 4px;
+    }
+    .policy-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4px;
+    }
+    .policy-tab {
+      border: 1px solid #333;
+      background: #1a1a26;
+      color: #999;
+      padding: 7px 6px;
+      border-radius: 4px;
+      font-size: 11px;
+      text-align: center;
+      cursor: default;
+    }
+    .policy-tab.selected {
+      border-color: #7b8cff;
+      color: #c0c8ff;
+      background: rgba(123,140,255,0.12);
+    }
+    .slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .slider-label-row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #aaa;
+    }
+    .slider-track {
+      height: 4px;
+      background: #2a2a3a;
+      border-radius: 2px;
+      position: relative;
+    }
+    .slider-fill {
+      height: 100%;
+      background: #7b8cff;
+      border-radius: 2px;
+      width: 40%;
+    }
+    .slider-thumb {
+      width: 12px;
+      height: 12px;
+      background: #7b8cff;
+      border-radius: 50%;
+      position: absolute;
+      top: -4px;
+      left: 40%;
+      transform: translateX(-50%);
+    }
+    .disabled-overlay {
+      opacity: 0.35;
+      pointer-events: none;
+    }
+    .stepper-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .stepper-btn {
+      width: 26px;
+      height: 26px;
+      border: 1px solid #444;
+      background: #1e1e2e;
+      color: #ccc;
+      border-radius: 4px;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: default;
+    }
+    .stepper-val {
+      font-size: 16px;
+      color: #e0e0f0;
+      min-width: 24px;
+      text-align: center;
+    }
+
+    /* ── Center: Heatmap + Memory Chart ─────────────────────── */
+    .center-col {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .heatmap-area {
+      flex: 0 0 260px;
+      border-bottom: 1px solid #2a2a3a;
+      padding: 16px;
+      background: #0f0f14;
+    }
+    .heatmap-grid {
+      display: grid;
+      grid-template-columns: repeat(32, 1fr);
+      gap: 2px;
+      margin-top: 10px;
+    }
+    .hm-cell {
+      aspect-ratio: 1;
+      border-radius: 2px;
+      background: #3dffa0;
+    }
+    .hm-cell.dead { background: #222230; }
+    .hm-cell.needle { background: #ff6b6b; }
+    .hm-legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-size: 10px;
+    }
+    .hm-legend-item { display: flex; align-items: center; gap: 5px; }
+    .hm-dot { width: 10px; height: 10px; border-radius: 2px; }
+
+    .memory-chart-area {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .chart-placeholder {
+      flex: 1;
+      border: 1px dashed #333;
+      border-radius: 6px;
+      background: #0d0d12;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+    /* Fake chart lines */
+    .fake-chart-svg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0; left: 0;
+    }
+
+    /* ── Right panel: Accuracy + BDH ─────────────────────── */
+    .right-col {
+      background: #13131c;
+      border-left: 1px solid #2a2a3a;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .accuracy-panel {
+      flex: 0 0 auto;
+      padding: 16px;
+      border-bottom: 1px solid #2a2a3a;
+    }
+    .needle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      border-bottom: 1px solid #1e1e28;
+      font-size: 11px;
+    }
+    .needle-row:last-child { border-bottom: none; }
+    .answer-box {
+      padding: 2px 8px;
+      border-radius: 3px;
+      font-size: 10px;
+      min-width: 60px;
+      text-align: center;
+    }
+    .answer-correct { background: rgba(61,255,160,0.12); color: #3dffa0; border: 1px solid #3dffa0; }
+    .answer-wrong   { background: rgba(255,107,107,0.12); color: #ff6b6b; border: 1px solid #ff6b6b; }
+
+    .bdh-panel {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .bdh-compare-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .bdh-col {
+      background: #0f0f1a;
+      border: 1px solid #2a2a3a;
+      border-radius: 5px;
+      padding: 10px;
+      font-size: 11px;
+    }
+    .bdh-col-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #888;
+      margin-bottom: 6px;
+    }
+    .bdh-stat-row { display: flex; justify-content: space-between; padding: 2px 0; color: #aaa; }
+    .bdh-stat-val { color: #e0e0f0; }
+
+    /* ── Footer ─────────────────────────────────────────────── */
+    .footer-bar {
+      background: #0d0d12;
+      border-top: 1px solid #2a2a3a;
+      padding: 6px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 10px;
+      color: #555;
+    }
+    .footer-bar a { color: #7b8cff; text-decoration: none; }
+
+    /* ── Sandbox Mode overlay (collapsed) ─────────────── */
+    .sandbox-toggle {
+      border: 1px dashed #555;
+      border-radius: 5px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- ══════════════════════════════════════════════════════════════
+       TOP BAR
+  ══════════════════════════════════════════════════════════════════ -->
+  <header class="top-bar">
+    <h1>Memory Under Pressure</h1>
+    <div class="claim-pill">
+      "A Transformer's KV cache grows linearly because it stores an exact copy of the past.
+      Eviction/compression cap that growth by trading exactness for a bounded budget.
+      BDH removes the growth entirely with a fixed-size overwriting state."
+    </div>
+    <div style="font-size:11px;color:#555;">DataForge 2026 · Pathway × Rime</div>
+  </header>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       GUIDED WALKTHROUGH BANNER  [GuidedWalkthrough.jsx]
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="walkthrough-banner">
+    <div class="region-label" style="white-space:nowrap">Guided path</div>
+    <div class="walkthrough-step-indicator">
+      <div class="step-dot done">1</div>
+      <div style="width:12px;height:1px;background:#3dffa0;opacity:0.4"></div>
+      <div class="step-dot active">2</div>
+      <div style="width:12px;height:1px;background:#444"></div>
+      <div class="step-dot">3</div>
+      <div style="width:12px;height:1px;background:#444"></div>
+      <div class="step-dot">4</div>
+      <div style="width:12px;height:1px;background:#444"></div>
+      <div class="step-dot">5</div>
+    </div>
+    <div class="walkthrough-narration">
+      <strong>Step 2 — Watch it grow:</strong>
+      The full cache (policy = Full) stores every token forever.
+      Drag the Sequence Length slider right — watch the memory chart climb linearly.
+      <span style="color:#888;font-size:10px"> [GuidedWalkthrough.jsx — narration panel]</span>
+    </div>
+    <div class="walkthrough-nav">
+      <div class="wf-btn">← Back</div>
+      <div class="wf-btn primary">Next →</div>
+      <div class="wf-btn" style="opacity:0.5">Skip to sandbox</div>
+    </div>
+  </div>
+  <div class="annotation" style="margin:0 20px 4px">
+    GuidedWalkthrough.jsx — narration sits in this horizontal banner above all controls &amp; readouts.
+    Steps 1–5 advance linearly; "Skip to sandbox" unlocks all controls (Sandbox.jsx).
+    ComprehensionCheck.jsx activates before step 5 unlock.
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       MAIN GRID: Left=Controls | Center=Heatmap+Chart | Right=Accuracy+BDH
+  ══════════════════════════════════════════════════════════════════ -->
+  <div class="main-grid">
+
+    <!-- ═══════════════════════════════════════════════
+         LEFT COLUMN: ControlPanel.jsx
+    ══════════════════════════════════════════════════ -->
+    <div class="control-panel">
+      <div class="region-label">ControlPanel.jsx</div>
+
+      <!-- 1.1 Cache Policy -->
+      <div>
+        <div class="ctrl-section-title">Cache Policy</div>
+        <div class="policy-tabs">
+          <div class="policy-tab selected">Full Cache</div>
+          <div class="policy-tab">Sliding Window</div>
+          <div class="policy-tab">Heavy Hitter</div>
+          <div class="policy-tab">BDH Recurrent</div>
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §1.1 — cachePolicy: enum "full" | "sliding_window" |
+          "heavy_hitter" | "bdh_recurrent". Maps to POST /simulate { policy }.
+          Default: "full".
+        </div>
+      </div>
+
+      <!-- 1.2 Budget Size (disabled under Full Cache) -->
+      <div class="disabled-overlay">
+        <div class="ctrl-section-title" style="display:flex;justify-content:space-between">
+          <span>Budget Size</span>
+          <span style="color:#555;font-size:10px">[disabled — Full Cache]</span>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <span>8 tokens</span>
+            <span style="color:#7b8cff">64 tokens</span>
+            <span>512 tokens</span>
+          </div>
+          <div class="slider-track">
+            <div class="slider-fill"></div>
+            <div class="slider-thumb"></div>
+          </div>
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §1.2 — budgetSize: integer 8–512 step 8.
+          Maps to POST /simulate { budget }. Greyed out (pointer-events:none)
+          when cachePolicy === "full".
+        </div>
+      </div>
+
+      <!-- 1.3 Sequence Length -->
+      <div>
+        <div class="ctrl-section-title">Sequence Length</div>
+        <div class="slider-row">
+          <div class="slider-label-row">
+            <span>32</span>
+            <span style="color:#7b8cff">128 tokens</span>
+            <span>512</span>
+          </div>
+          <div class="slider-track">
+            <div class="slider-fill" style="width:25%"></div>
+            <div class="slider-thumb" style="left:25%"></div>
+          </div>
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §1.3 — sequenceLength: integer 32–512 step 16.
+          Maps to POST /simulate { seq_len }. Increasing this is the primary
+          demonstration of linear KV cache growth.
+        </div>
+      </div>
+
+      <!-- 1.4 Needle Count -->
+      <div>
+        <div class="ctrl-section-title">Needle Count</div>
+        <div class="stepper-row">
+          <div class="stepper-btn">−</div>
+          <div class="stepper-val">2</div>
+          <div class="stepper-btn">+</div>
+          <span style="font-size:11px;color:#888">needles (1–5)</span>
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §1.4 — needleCount: integer 1–5.
+          Maps to POST /simulate { num_needles }. Controls how many facts
+          needle_haystack.py embeds in the sequence.
+        </div>
+      </div>
+
+      <!-- Sandbox toggle -->
+      <div class="sandbox-toggle">
+        [ Sandbox.jsx — unlocked after guided steps ]<br/>
+        All controls active, free-play mode
+      </div>
+      <div class="annotation">
+        Sandbox.jsx — collapsed here during guided walkthrough.
+        Unlocked by ComprehensionCheck.jsx after step 4.
+        All four controls enabled with no narration overrides.
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         CENTER COLUMN: CacheHeatmap.jsx + MemoryChart.jsx
+    ══════════════════════════════════════════════════ -->
+    <div class="center-col">
+
+      <!-- CacheHeatmap.jsx -->
+      <div class="heatmap-area">
+        <div class="region-label">
+          CacheHeatmap.jsx
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div style="font-size:12px;color:#ccc;margin-bottom:6px">
+          Which past tokens are still "alive" in the KV cache?
+        </div>
+
+        <!-- Two rows: current policy (top) vs. full-cache baseline (bottom) -->
+        <div style="font-size:10px;color:#666;margin-bottom:3px">
+          Current policy (Heavy Hitter) ↓
+        </div>
+        <div class="heatmap-grid" id="hm-policy">
+          <!-- cells filled by JS below -->
+        </div>
+        <div class="vs-divider" style="margin:8px 0">vs. Full Cache baseline</div>
+        <div style="font-size:10px;color:#666;margin-bottom:3px">
+          Full cache — all tokens alive ↓
+        </div>
+        <div class="heatmap-grid" id="hm-baseline">
+          <!-- all alive -->
+        </div>
+
+        <div class="hm-legend">
+          <div class="hm-legend-item"><div class="hm-dot" style="background:#3dffa0"></div>In cache</div>
+          <div class="hm-legend-item"><div class="hm-dot" style="background:#222230"></div>Evicted</div>
+          <div class="hm-legend-item"><div class="hm-dot" style="background:#ff6b6b"></div>Needle token</div>
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §2.4 — alive_token_indices[] (live) vs. all-alive baseline.
+          Red cells mark needle positions. Visual: "what did you lose?"
+          Label: "Live cache state" — no PrecomputedBadge here.
+        </div>
+      </div>
+
+      <!-- MemoryChart.jsx -->
+      <div class="memory-chart-area">
+        <div class="region-label">
+          MemoryChart.jsx
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div style="font-size:12px;color:#ccc;margin-bottom:4px">
+          Memory footprint: live policy vs. full-cache baseline
+        </div>
+        <div class="chart-placeholder">
+          <svg class="fake-chart-svg" viewBox="0 0 100 60" preserveAspectRatio="none">
+            <!-- baseline: full cache, linear grow -->
+            <polyline
+              points="0,58 10,52 20,46 30,40 40,34 50,28 60,22 70,16 80,10 90,4 100,0"
+              fill="none" stroke="#444" stroke-width="0.8" stroke-dasharray="2,2"/>
+            <!-- heavy-hitter: capped after a point -->
+            <polyline
+              points="0,58 10,53 20,49 30,46 40,43 50,42 60,41 70,41 80,40 90,40 100,39"
+              fill="none" stroke="#7b8cff" stroke-width="1.2"/>
+            <!-- axes -->
+            <line x1="0" y1="60" x2="100" y2="60" stroke="#333" stroke-width="0.5"/>
+            <line x1="0" y1="0"  x2="0"   y2="60" stroke="#333" stroke-width="0.5"/>
+          </svg>
+          <div style="position:absolute;top:8px;right:12px;font-size:10px;display:flex;flex-direction:column;gap:4px;">
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:16px;height:2px;background:#7b8cff"></div>
+              <span style="color:#aaa">Live policy</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px">
+              <div style="width:16px;height:2px;background:#444;border-top:1px dashed #555"></div>
+              <span style="color:#aaa">Full-cache baseline</span>
+            </div>
+          </div>
+          <div style="position:absolute;bottom:8px;left:12px;font-size:10px;color:#555">
+            Generation step →
+          </div>
+          <div style="position:absolute;left:4px;top:30px;font-size:10px;color:#555;
+                      writing-mode:vertical-rl;transform:rotate(180deg)">
+            Tokens in cache ↑
+          </div>
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §2.1 — cache_size_tokens (live, colored line) vs.
+          full_cache_baseline_tokens (dashed grey line). Ratio live/baseline
+          shows savings. Both values from /simulate response — no PrecomputedBadge.
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════
+         RIGHT COLUMN: AccuracyPanel.jsx + BDHModule.jsx
+    ══════════════════════════════════════════════════ -->
+    <div class="right-col">
+
+      <!-- AccuracyPanel.jsx -->
+      <div class="accuracy-panel">
+        <div class="region-label">
+          AccuracyPanel.jsx
+          <span class="badge-live">LIVE</span>
+        </div>
+        <div style="font-size:12px;color:#ccc;margin-bottom:8px">
+          Needle retrieval: model answer vs. ground truth
+        </div>
+
+        <!-- Column headers -->
+        <div style="display:grid;grid-template-columns:80px 1fr 1fr;gap:4px;
+                    font-size:10px;color:#666;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.08em">
+          <span>Needle</span><span>Model output</span><span>Correct answer</span>
+        </div>
+
+        <div class="needle-row">
+          <span style="color:#888">#1</span>
+          <div class="answer-box answer-correct">Token_42</div>
+          <div class="answer-box answer-correct">Token_42</div>
+        </div>
+        <div class="needle-row">
+          <span style="color:#888">#2</span>
+          <div class="answer-box answer-wrong">Token_17</div>
+          <div class="answer-box answer-correct">Token_99</div>
+        </div>
+
+        <!-- Budget sweep curve (PRECOMPUTED) -->
+        <div style="margin-top:12px;border-top:1px solid #222;padding-top:10px">
+          <div style="font-size:11px;color:#ccc;margin-bottom:6px;display:flex;align-items:center">
+            Accuracy vs. budget curve
+            <span class="badge-precomputed">PRECOMPUTED</span>
+          </div>
+          <!-- PrecomputedBadge.jsx placement -->
+          <div class="placeholder-box" style="height:80px;position:relative">
+            <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none">
+              <polyline points="5,45 15,38 25,28 35,20 45,15 55,12 65,10 75,9 85,9 95,9"
+                fill="none" stroke="#f5a623" stroke-width="1.2" opacity="0.6"/>
+              <!-- current live point -->
+              <circle cx="35" cy="20" r="2.5" fill="#7b8cff"/>
+              <line x1="0" y1="50" x2="100" y2="50" stroke="#333" stroke-width="0.5"/>
+              <line x1="0" y1="0" x2="0" y2="50" stroke="#333" stroke-width="0.5"/>
+            </svg>
+            <div style="position:absolute;bottom:4px;right:6px;font-size:9px;color:#666">
+              Budget (tokens) →
+            </div>
+            <div style="position:absolute;top:4px;left:36px;font-size:9px;color:#7b8cff">
+              ● Current run
+            </div>
+          </div>
+          <div class="annotation">
+            CONTROLS_SPEC §2.3 — Precomputed curve from accuracy_vs_budget.json (orange)
+            + live point at current budgetSize (blue dot).
+            PrecomputedBadge.jsx required here: "Precomputed sweep — not this run."
+          </div>
+        </div>
+      </div>
+
+      <!-- BDHModule.jsx -->
+      <div class="bdh-panel">
+        <div class="region-label">
+          BDHModule.jsx
+          <span class="badge-live">LIVE (our toy)</span>
+          <span class="badge-precomputed">PRECOMPUTED (published)</span>
+        </div>
+        <div style="font-size:12px;color:#ccc;margin-bottom:4px">
+          BDH Fixed-Size Recurrent State — comparison
+        </div>
+
+        <div class="bdh-compare-row">
+          <div class="bdh-col">
+            <div class="bdh-col-label">Our toy simulator</div>
+            <div class="bdh-stat-row"><span>Memory</span><span class="bdh-stat-val">64 tok</span></div>
+            <div class="bdh-stat-row"><span>Accuracy</span><span class="bdh-stat-val">50%</span></div>
+            <div class="bdh-stat-row"><span>Growth</span><span class="bdh-stat-val">Flat</span></div>
+            <div style="margin-top:6px">
+              <span class="badge-live" style="margin-left:0">LIVE</span>
+            </div>
+          </div>
+          <div class="bdh-col">
+            <div class="bdh-col-label">BDH paper claims</div>
+            <div class="bdh-stat-row"><span>Memory</span><span class="bdh-stat-val">Fixed</span></div>
+            <div class="bdh-stat-row"><span>Long-ctx</span><span class="bdh-stat-val">↑ pub.</span></div>
+            <div class="bdh-stat-row"><span>Growth</span><span class="bdh-stat-val">O(1)</span></div>
+            <div style="margin-top:6px">
+              <span class="badge-precomputed" style="margin-left:0">PUBLISHED</span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:8px;font-size:10px;color:#666;line-height:1.6">
+          ⚠ Our toy simulator ≠ the BDH model. The comparison is illustrative only.
+          Published numbers are from arXiv:2509.26507 — not reproduced by our team.
+        </div>
+        <div class="annotation">
+          CONTROLS_SPEC §2.5 — Left col: live /simulate response (bdh_recurrent policy).
+          Right col: bdh_published_claims.json — PrecomputedBadge.jsx required:
+          "Published result (arXiv:2509.26507) — not reproduced by our team."
+        </div>
+      </div>
+
+    </div><!-- /right-col -->
+  </div><!-- /main-grid -->
+
+  <!-- ══════════════════════════════════════════════════════════════
+       FOOTER BAR
+  ══════════════════════════════════════════════════════════════════ -->
+  <footer class="footer-bar">
+    <div>Wireframe — static mockup, no live data · Agent 2 output · Day 1</div>
+    <div>
+      ComprehensionCheck.jsx activates at end of walkthrough ·
+      PrecomputedBadge.jsx: 2 placements (see CONTROLS_SPEC §3)
+    </div>
+    <div><a href="CONTROLS_SPEC.md">CONTROLS_SPEC.md</a> · <a href="wireframe_notes.md">wireframe_notes.md</a></div>
+  </footer>
+
+</div><!-- /app-shell -->
+
+<script>
+  // ── Populate heatmap cells (static demo, no real data) ──────────
+  const policyGrid   = document.getElementById('hm-policy');
+  const baselineGrid = document.getElementById('hm-baseline');
+  const totalCells   = 64;
+  const needlePos    = [14, 47];
+  const alivePct     = 0.45; // heavy-hitter keeps ~45%
+
+  for (let i = 0; i < totalCells; i++) {
+    // Policy row
+    const pc = document.createElement('div');
+    pc.className = 'hm-cell';
+    if (needlePos.includes(i)) {
+      pc.className = 'hm-cell needle';
+    } else if (Math.random() > alivePct) {
+      pc.className = 'hm-cell dead';
+    }
+    policyGrid.appendChild(pc);
+
+    // Baseline row (all alive)
+    const bc = document.createElement('div');
+    bc.className = 'hm-cell' + (needlePos.includes(i) ? ' needle' : '');
+    baselineGrid.appendChild(bc);
+  }
+</script>
+</body>
+</html>
