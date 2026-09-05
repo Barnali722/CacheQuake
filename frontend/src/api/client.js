@@ -3,15 +3,25 @@
  * Single responsibility: Thin wrapper around the backend API endpoints.
  * All network calls go through this file — components never fetch directly.
  *
- * Backend base URL is read from the environment variable VITE_API_BASE_URL.
- * All functions are stubs that throw "not implemented" until Day 2.
+ * Day 2: simulate() and loadAccuracyVsBudget() are backed by mockResponses.js.
+ *        The exported function signatures are IDENTICAL to what the real backend requires.
+ *        Day 3 swap: remove the mock import lines and uncomment the fetch() blocks.
  *
  * Endpoint reference: backend/app/api/routes.py
  * Request/response schemas: backend/app/api/schemas.py
- * Variable names: CONTROLS_SPEC.md §5 (Variable to API Mapping Summary)
+ * Variable names: CONTROLS_SPEC.md §5
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+// ── Day 2 mock imports — REMOVE these on Day 3 ──────────────────────────────
+import {
+  getMockResponse,
+  getMockAccuracyVsBudgetCurve,
+  MOCK_BDH_PUBLISHED_CLAIMS,
+} from './mockResponses';
+// ── End Day 2 mock imports ───────────────────────────────────────────────────
+
+const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
+  || 'http://localhost:8000';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /simulate
@@ -21,93 +31,94 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
  * Run a full simulation with the given parameters.
  *
  * @param {object} params
- * @param {string} params.policy         - cachePolicy: "full" | "sliding_window" | "heavy_hitter" | "bdh_recurrent"
+ * @param {string} params.policy         - cachePolicy: "full"|"sliding_window"|"heavy_hitter"|"bdh_recurrent"
  * @param {number} params.budget         - budgetSize: integer 8–512
  * @param {number} params.seq_len        - sequenceLength: integer 32–512
  * @param {number} params.num_needles    - needleCount: integer 1–5
  *
  * @returns {Promise<SimulateResponse>}
- * @typedef {object} SimulateResponse
- * @property {number}   cache_size_tokens           - Live: tokens currently in cache (Readout 2.1)
- * @property {number}   full_cache_baseline_tokens  - Baseline: full-cache token count (Readout 2.1)
- * @property {number[]} alive_token_indices          - Live: which token positions are in cache (Readout 2.4)
- * @property {string[]} model_answers                - Live: model's answers to needle questions (Readout 2.2)
- * @property {string[]} ground_truth_answers         - Live: correct answers from task generator (Readout 2.2)
- * @property {number}   accuracy_score               - Live: fraction correct (0–1), for Readout 2.3 live point
- *
  * @see CONTROLS_SPEC.md §5
  */
 export async function simulate(params) {
-  throw new Error('simulate() — not implemented. Day 2 task: wire POST /simulate.');
+  // ── Day 2 MOCK — replace this block on Day 3 ────────────────────────────
+  return getMockResponse(params);
+  // ── Day 3 REAL — uncomment this block when backend is ready ─────────────
+  // const res = await fetch(`${API_BASE}/simulate`, {
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json' },
+  //   body: JSON.stringify(params),
+  // });
+  // if (!res.ok) throw new Error(`/simulate failed: ${res.status} ${res.statusText}`);
+  // return res.json();
+  // ── End Day 3 block ───────────────────────────────────────────────────────
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /step (optional per-step streaming)
+// GET /step
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch a single generation step's cache state (for live step-by-step animation).
- *
- * @param {string} sessionId  - Session ID returned by /simulate
- * @param {number} stepIndex  - Generation step index (0-based)
- *
+ * Fetch a single generation step's cache state.
+ * @param {string} sessionId
+ * @param {number} stepIndex
  * @returns {Promise<StepResponse>}
- * @typedef {object} StepResponse
- * @property {number}   cache_size_tokens   - Tokens in cache at this step
- * @property {number[]} alive_token_indices - Which tokens are alive at this step
  */
 export async function getStep(sessionId, stepIndex) {
-  throw new Error('getStep() — not implemented. Day 2 task: wire GET /step.');
+  // Day 3 implementation:
+  // const res = await fetch(`${API_BASE}/step/${sessionId}/${stepIndex}`);
+  // if (!res.ok) throw new Error(`/step failed: ${res.status}`);
+  // return res.json();
+  throw new Error('getStep() — not implemented until Day 3 (live backend).');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /compare (policy comparison endpoint)
+// GET /compare
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch comparison data for all four policies at the same seq_len and budget.
- * Used for the trade-off table shown in walkthrough step 5.
- *
- * @param {object} params
- * @param {number} params.budget    - budgetSize
- * @param {number} params.seq_len   - sequenceLength
- *
+ * Fetch comparison data for all four policies.
+ * @param {{ budget: number, seq_len: number }} params
  * @returns {Promise<CompareResponse>}
- * @typedef {object} CompareResponse
- * @property {object} full          - Stats for "full" policy
- * @property {object} sliding_window - Stats for "sliding_window" policy
- * @property {object} heavy_hitter  - Stats for "heavy_hitter" policy
- * @property {object} bdh_recurrent - Stats for "bdh_recurrent" policy
  */
 export async function compare(params) {
-  throw new Error('compare() — not implemented. Day 3 task: wire GET /compare.');
+  // Day 3 implementation:
+  // const res = await fetch(`${API_BASE}/compare?${new URLSearchParams(params)}`);
+  // if (!res.ok) throw new Error(`/compare failed: ${res.status}`);
+  // return res.json();
+  throw new Error('compare() — not implemented until Day 3 (live backend).');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Precomputed data loaders (NOT live API calls — load from data/precomputed/)
+// Precomputed data loaders
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Load the precomputed accuracy-vs-budget sweep curve.
- * Data source: data/precomputed/accuracy_vs_budget.json
- * This data is NOT from a live run — must be displayed with PrecomputedBadge.
+ * Must be displayed with PrecomputedBadge (CONTROLS_SPEC §3 placement #1).
  *
+ * @param {string} policy
+ * @param {number} seq_len
+ * @param {number} num_needles
  * @returns {Promise<Array<{budget: number, accuracy: number}>>}
- * @see CONTROLS_SPEC.md §2.3
  */
-export async function loadAccuracyVsBudget() {
-  throw new Error('loadAccuracyVsBudget() — not implemented. Day 2 task: fetch accuracy_vs_budget.json.');
+export async function loadAccuracyVsBudget(policy, seq_len, num_needles) {
+  // ── Day 2 MOCK — replace on Day 3 ───────────────────────────────────────
+  return getMockAccuracyVsBudgetCurve(policy, seq_len, num_needles);
+  // ── Day 3 REAL ────────────────────────────────────────────────────────────
+  // const res = await fetch('/data/precomputed/accuracy_vs_budget.json');
+  // return res.json();
 }
 
 /**
- * Load BDH published claims from precomputed data.
- * Data source: data/precomputed/bdh_published_claims.json
- * Sourced from arXiv:2509.26507 — NOT reproduced by our team.
- * Must be displayed with PrecomputedBadge.
+ * Load BDH published claims.
+ * Must be displayed with PrecomputedBadge (CONTROLS_SPEC §3 placement #2).
  *
  * @returns {Promise<object>}
- * @see CONTROLS_SPEC.md §2.5
  */
 export async function loadBDHPublishedClaims() {
-  throw new Error('loadBDHPublishedClaims() — not implemented. Day 3 task: fetch bdh_published_claims.json.');
+  // ── Day 2 MOCK — replace on Day 3 ───────────────────────────────────────
+  return MOCK_BDH_PUBLISHED_CLAIMS;
+  // ── Day 3 REAL ────────────────────────────────────────────────────────────
+  // const res = await fetch('/data/precomputed/bdh_published_claims.json');
+  // return res.json();
 }

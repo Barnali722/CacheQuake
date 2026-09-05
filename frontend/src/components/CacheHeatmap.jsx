@@ -3,18 +3,131 @@
  * Single responsibility: Visualise which token positions are currently "alive"
  * in the KV cache (aliveTokenIndices) versus the full-cache baseline,
  * per CONTROLS_SPEC §2.4.
+ *
+ * Data contract: all props come from simulationStore — never hardcoded here.
+ * Day 3: same props, same render logic — only the data source changes (mock → live API).
  */
 
-import React from 'react';
+import React, { useMemo } from 'react';
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+const styles = {
+  wrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '10px',
+    padding: '0',
+  },
+  rowLabel: {
+    fontSize: '10px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em',
+    color: '#666680',
+    marginBottom: '3px',
+  },
+  grid: {
+    display: 'grid',
+    gap: '2px',
+  },
+  legend: {
+    display: 'flex',
+    gap: '16px',
+    marginTop: '6px',
+    flexWrap: 'wrap',
+  },
+  legendItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '5px',
+    fontSize: '10px',
+    color: '#aaaacc',
+  },
+  legendDot: {
+    width: '10px',
+    height: '10px',
+    borderRadius: '2px',
+    flexShrink: 0,
+  },
+  liveLabel: {
+    display: 'inline-block',
+    background: '#001f0f',
+    border: '1px solid #3dffa0',
+    color: '#3dffa0',
+    fontSize: '10px',
+    padding: '2px 8px',
+    borderRadius: '3px',
+    marginLeft: '6px',
+    verticalAlign: 'middle',
+  },
+  statsRow: {
+    display: 'flex',
+    gap: '16px',
+    fontSize: '11px',
+    color: '#aaaacc',
+    marginTop: '4px',
+  },
+  statBold: {
+    color: '#e0e0f0',
+    fontWeight: '600',
+  },
+  divider: {
+    borderTop: '1px solid #2a2a3a',
+    margin: '6px 0',
+  },
+  vsLabel: {
+    fontSize: '10px',
+    color: '#555',
+    textAlign: 'center',
+    margin: '2px 0',
+  },
+};
+
+// Cell color map
+const CELL_COLORS = {
+  needle_alive:   '#ff6b6b',  // needle AND in cache — highlight
+  needle_evicted: '#7a2020',  // needle evicted — critical loss
+  alive:          '#3dffa0',  // normal token, in cache
+  evicted:        '#1e1e2e',  // normal token, evicted
+  baseline:       '#2a3a2a',  // baseline row — all alive, softer green
+  baseline_needle:'#ff6b6b',  // needle in baseline row
+};
+
+/**
+ * Single token cell.
+ */
+function HeatCell({ state, tokenIndex }) {
+  const color =
+    state === 'needle_alive'   ? CELL_COLORS.needle_alive :
+    state === 'needle_evicted' ? CELL_COLORS.needle_evicted :
+    state === 'alive'          ? CELL_COLORS.alive :
+    state === 'baseline'       ? CELL_COLORS.baseline :
+    state === 'baseline_needle'? CELL_COLORS.baseline_needle :
+                                 CELL_COLORS.evicted;
+
+  return (
+    <div
+      title={`Token ${tokenIndex}: ${state}`}
+      aria-label={`Token ${tokenIndex}: ${state}`}
+      style={{
+        background: color,
+        borderRadius: '2px',
+        transition: 'background 0.25s ease',
+        aspectRatio: '1',
+        minWidth: 0,
+      }}
+    />
+  );
+}
 
 /**
  * CacheHeatmap
  *
  * Props:
- *   aliveTokenIndices  {number[]}  Indices of tokens still in cache — from /simulate { alive_token_indices }
- *   sequenceLength     {number}    Total tokens in the sequence — determines grid width
- *   needlePositions    {number[]}  Token indices that are needle facts (always highlighted)
- *   isLive             {boolean}   True when data comes from a live /simulate call (drives badge)
+ *   aliveTokenIndices  {number[]}  Indices of tokens still in cache — from simulationStore
+ *   sequenceLength     {number}    Total sequence length — determines grid columns
+ *   needlePositions    {number[]}  Token indices that are needle facts
+ *   isLoading          {boolean}   Show shimmer while simulation is running
+ *   isMock             {boolean}   True when data comes from mockResponses — for mock label
  *
  * @see CONTROLS_SPEC.md §2.4
  */
@@ -22,21 +135,122 @@ function CacheHeatmap({
   aliveTokenIndices = [],
   sequenceLength = 128,
   needlePositions = [],
-  isLive = false,
+  isLoading = false,
+  isMock = false,
 }) {
-  return (
-    <div id="cache-heatmap" aria-label="Cache Heatmap — live vs. full-cache baseline">
-      {/* ── Not yet implemented placeholder ── */}
-      <div>CacheHeatmap — not yet implemented</div>
+  // Number of grid columns — cap at 64 for readability, group wider sequences
+  const cols = useMemo(() => {
+    if (sequenceLength <= 64)  return sequenceLength;
+    if (sequenceLength <= 128) return 64;
+    return 64; // always 64 columns max; multiple rows for longer seqs
+  }, [sequenceLength]);
 
-      {/*
-        Day 2 implementation notes:
-        - Render two rows of cells: current policy (top) vs. all-alive baseline (bottom).
-        - Cell states: alive (green), evicted (dark grey), needle (red/highlight).
-        - aliveTokenIndices sourced from /simulate response field alive_token_indices[].
-        - No PrecomputedBadge on this component — all data is live.
-        - Render "Live cache state" label below grid.
-      */}
+  const aliveSet  = useMemo(() => new Set(aliveTokenIndices), [aliveTokenIndices]);
+  const needleSet = useMemo(() => new Set(needlePositions),   [needlePositions]);
+
+  const aliveCount   = aliveTokenIndices.length;
+  const evictedCount = sequenceLength - aliveCount;
+  const needlesAlive = needlePositions.filter((n) => aliveSet.has(n)).length;
+
+  // Build cell state arrays
+  const policyCells = useMemo(() =>
+    Array.from({ length: sequenceLength }, (_, i) => {
+      const isNeedle = needleSet.has(i);
+      const isAlive  = aliveSet.has(i);
+      if (isNeedle && isAlive)  return 'needle_alive';
+      if (isNeedle && !isAlive) return 'needle_evicted';
+      return isAlive ? 'alive' : 'evicted';
+    }),
+    [sequenceLength, aliveSet, needleSet]
+  );
+
+  const baselineCells = useMemo(() =>
+    Array.from({ length: sequenceLength }, (_, i) =>
+      needleSet.has(i) ? 'baseline_needle' : 'baseline'
+    ),
+    [sequenceLength, needleSet]
+  );
+
+  if (isLoading) {
+    return (
+      <div style={{ color: '#666680', fontSize: '12px', padding: '12px' }}>
+        Simulating…
+      </div>
+    );
+  }
+
+  return (
+    <div id="cache-heatmap" style={styles.wrapper} aria-label="Cache Heatmap — live vs. full-cache baseline">
+
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ fontSize: '12px', color: '#e0e0f0', fontWeight: 600 }}>
+          Token Cache State
+        </span>
+        <span style={styles.liveLabel}>LIVE</span>
+        {isMock && (
+          <span style={{
+            fontSize: '10px', color: '#f5a623', background: '#1a1000',
+            border: '1px solid #f5a623', borderRadius: '3px', padding: '1px 6px',
+          }}>
+            MOCK DATA
+          </span>
+        )}
+      </div>
+
+      {/* Stats row */}
+      <div style={styles.statsRow}>
+        <span>In cache: <span style={styles.statBold}>{aliveCount}</span></span>
+        <span>Evicted: <span style={styles.statBold}>{evictedCount}</span></span>
+        <span>
+          Needles retained:{' '}
+          <span style={{ ...styles.statBold, color: needlesAlive === needlePositions.length ? '#3dffa0' : '#ff6b6b' }}>
+            {needlesAlive}/{needlePositions.length}
+          </span>
+        </span>
+      </div>
+
+      {/* Policy row — current cache state */}
+      <div>
+        <div style={styles.rowLabel}>Current policy ↓</div>
+        <div style={{ ...styles.grid, gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          {policyCells.map((state, i) => (
+            <HeatCell key={i} state={state} tokenIndex={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* Divider */}
+      <div style={styles.vsLabel}>vs. Full Cache baseline</div>
+
+      {/* Baseline row — all tokens alive */}
+      <div>
+        <div style={styles.rowLabel}>Full cache baseline — all alive ↓</div>
+        <div style={{ ...styles.grid, gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
+          {baselineCells.map((state, i) => (
+            <HeatCell key={i} state={state} tokenIndex={i} />
+          ))}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div style={styles.legend}>
+        {[
+          { color: CELL_COLORS.alive,          label: 'In cache' },
+          { color: CELL_COLORS.evicted,        label: 'Evicted' },
+          { color: CELL_COLORS.needle_alive,   label: 'Needle (in cache)' },
+          { color: CELL_COLORS.needle_evicted, label: 'Needle (evicted!)' },
+        ].map(({ color, label }) => (
+          <div key={label} style={styles.legendItem}>
+            <div style={{ ...styles.legendDot, background: color }} />
+            <span>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      <div style={{ fontSize: '10px', color: '#555', marginTop: '2px' }}>
+        Live cache state — per CONTROLS_SPEC §2.4
+      </div>
     </div>
   );
 }
