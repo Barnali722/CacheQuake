@@ -48,7 +48,7 @@ const STEPS = [
       needleCount:    2,
     },
     narration: `
-      <strong>Sliding Window</strong> (StreamingLLM-style) caps memory by keeping only the
+      <strong>Sliding Window</strong> (StreamingLLM — Xiao et al., arXiv:2309.17453) caps memory by keeping only the
       most recent <em>budget</em> tokens. The cache stops growing once it reaches the budget —
       the memory chart plateaus while the full-cache baseline keeps climbing.
       But look at the heat-map: the tokens from the beginning of the sequence are gone.
@@ -68,7 +68,7 @@ const STEPS = [
       needleCount:    2,
     },
     narration: `
-      <strong>Heavy Hitter</strong> (H2O-style) evicts differently: instead of discarding the
+      <strong>Heavy Hitter</strong> (H2O — Zhang et al., arXiv:2306.14048) evicts differently: instead of discarding the
       oldest tokens, it scores every token by how much cumulative attention it has received
       and keeps the top <em>budget</em> "heavy hitters."
       Tokens that were attended to often — including the needle facts — tend to survive.
@@ -90,6 +90,9 @@ const STEPS = [
       needleCount:    2,
     },
     narration: `
+      <strong>Learning objective:</strong> Understand how BDH (Yıldız et al., arXiv:2509.26507)
+      eliminates cache growth entirely by architectural design, not eviction.
+      <br/><br/>
       <strong>BDH Recurrent</strong> takes a different architectural approach. Instead of
       appending to a growing list of keys and values, it maintains a <em>fixed-size state</em>
       that is overwritten by a local Hebbian update rule as each new token arrives.
@@ -98,6 +101,10 @@ const STEPS = [
       But this comes with a different failure mode: not eviction, but <em>interference</em>.
       New information overwrites old information in-place. The model can't "look back" at a
       specific earlier token — it can only recall what survived successive overwrites.
+      <br/><br/>
+      <strong>Note on BDH-CQ:</strong> The same paper introduces a BDH-CQ (contrastive-query)
+      variant. Its relationship to standard KV cache eviction is indirect — this module teaches
+      the core BDH memory model only, not BDH-CQ specifically.
     `,
     hint: 'Compare the BDH memory chart with Full Cache — flat vs. linear growth.',
     highlightControl: 'cachePolicy',

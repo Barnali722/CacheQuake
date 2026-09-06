@@ -184,9 +184,7 @@ function AppInner() {
       <header style={appStyles.topBar}>
         <span style={appStyles.topTitle}>Memory Under Pressure</span>
         <div className="topbar-claim-pill" style={appStyles.claimPill}>
-          "A Transformer's KV cache grows linearly — it stores an exact copy of the past.
-          Eviction and compression cap that growth by trading exactness for a bounded budget.
-          BDH removes the growth entirely with a fixed-size overwriting state."
+          "A Transformer's KV cache grows linearly with every token it has ever seen because it stores an exact copy of the past; eviction and compression trade that exactness for a bounded budget, and architectures like BDH remove the growth altogether by replacing the cache with a fixed-size associative state that overwrites itself instead of appending."
         </div>
         <span className="topbar-track-tag" style={appStyles.trackTag}>
           DataForge 2026 · Pathway × Rime

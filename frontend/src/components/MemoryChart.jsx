@@ -8,7 +8,8 @@
  * Day 3: same props, same render logic — only the data source changes (mock → live API).
  */
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
+import { useSimulation } from '../state/simulationStore';
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
 const CHART_H = 160;
@@ -122,6 +123,9 @@ function MemoryChart({
   sequenceLength = 128,
   isLoading = false,
 }) {
+  // Agent 2 audit fix: read isMock from store to surface DEMO MODE badge
+  const { state } = useSimulation();
+  const isMock = state.ui.isMock;
   const lineColor = POLICY_COLOR[cachePolicy] || '#7b8cff';
 
   // Compute chart dimensions responsively using a fixed aspect ratio
@@ -173,6 +177,15 @@ function MemoryChart({
       <div style={styles.header}>
         <span style={styles.title}>Memory Footprint</span>
         <span style={styles.liveLabel}>LIVE</span>
+        {isMock && (
+          <span style={{
+            display: 'inline-block', background: '#1a1000',
+            border: '1px solid #f5a623', color: '#f5a623',
+            fontSize: '10px', padding: '2px 8px', borderRadius: '3px',
+          }}>
+            DEMO MODE — backend not connected
+          </span>
+        )}
       </div>
 
       {/* Stats */}
