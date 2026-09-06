@@ -1,0 +1,97 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.4, pytest-8.2.2, pluggy-1.6.0 -- C:\Users\tanti\Documents\GitHub\CacheQuake\backend\.venv_verify\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\tanti\Documents\GitHub\CacheQuake\backend
+plugins: anyio-4.15.1
+collecting ... collected 72 items
+
+tests/test_day2.py::TestEndToEndForwardPass::test_logits_are_not_zeros PASSED [  1%]
+tests/test_day2.py::TestEndToEndForwardPass::test_k_v_are_real_computation PASSED [  2%]
+tests/test_day2.py::TestEndToEndForwardPass::test_two_different_inputs_give_different_kv PASSED [  4%]
+tests/test_day2.py::TestEndToEndForwardPass::test_cache_mask_affects_output PASSED [  5%]
+tests/test_day2.py::TestFullCacheRegression::test_monotonically_growing PASSED [  6%]
+tests/test_day2.py::TestFullCacheRegression::test_never_evicts PASSED    [  8%]
+tests/test_day2.py::TestFullCacheRegression::test_mask_always_all_true PASSED [  9%]
+tests/test_day2.py::TestSlidingWindowRegression::test_grows_until_budget_then_stays_constant PASSED [ 11%]
+tests/test_day2.py::TestSlidingWindowRegression::test_sink_tokens_preserved PASSED [ 12%]
+tests/test_day2.py::TestSlidingWindowRegression::test_window_tokens_are_most_recent PASSED [ 13%]
+tests/test_day2.py::TestSlidingWindowRegression::test_no_sink_naive_sliding_window PASSED [ 15%]
+tests/test_day2.py::TestSlidingWindowRegression::test_mask_always_all_true PASSED [ 16%]
+tests/test_day2.py::TestSlidingWindowRegression::test_reset_clears_store PASSED [ 18%]
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_returns_200 PASSED [ 19%]
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_response_well_formed PASSED [ 20%]
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_visible_indices_monotonically_grow PASSED [ 22%]
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_memory_grows_linearly PASSED [ 23%]
+tests/test_day2.py::TestSimulateEndpoint::test_sliding_window_returns_200 PASSED [ 25%]
+tests/test_day2.py::TestSimulateEndpoint::test_sliding_window_response_well_formed PASSED [ 26%]
+tests/test_day2.py::TestSimulateEndpoint::test_sliding_window_cache_bounded PASSED [ 27%]
+tests/test_day2.py::TestSimulateEndpoint::test_sliding_window_sink_indices_always_present PASSED [ 29%]
+tests/test_day2.py::TestSimulateEndpoint::test_unknown_policy_returns_400 PASSED [ 30%]
+tests/test_day2.py::TestSimulateEndpoint::test_bad_question_target_returns_400 PASSED [ 31%]
+tests/test_day2.py::TestSimulateEndpoint::test_step_still_501 PASSED     [ 33%]
+tests/test_day2.py::TestSimulateEndpoint::test_cache_size_bytes_formula PASSED [ 34%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_budget_never_exceeded PASSED [ 36%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_most_recent_token_always_kept PASSED [ 37%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_mask_is_always_all_true PASSED [ 38%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_reset_clears_state PASSED [ 40%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_global_indices_matches_kept_rows PASSED [ 41%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_high_score_token_survives_eviction PASSED [ 43%]
+tests/test_day3.py::TestHeavyHitterPolicy::test_policy_info_keys PASSED  [ 44%]
+tests/test_day3.py::TestBDHInspiredState::test_M_shape_stays_constant PASSED [ 45%]
+tests/test_day3.py::TestBDHInspiredState::test_K_stored_shape_is_state_size PASSED [ 47%]
+tests/test_day3.py::TestBDHInspiredState::test_memory_tokens_used_is_constant PASSED [ 48%]
+tests/test_day3.py::TestBDHInspiredState::test_reset_zeros_M PASSED      [ 50%]
+tests/test_day3.py::TestBDHInspiredState::test_mask_always_all_true PASSED [ 51%]
+tests/test_day3.py::TestBDHInspiredState::test_M_changes_after_write PASSED [ 52%]
+tests/test_day3.py::TestBDHInspiredState::test_docstring_label_present PASSED [ 54%]
+tests/test_day3.py::TestBDHInspiredState::test_policy_info_keys PASSED   [ 55%]
+tests/test_day3.py::TestSimulateNewPolicies::test_heavy_hitter_returns_200 PASSED [ 56%]
+tests/test_day3.py::TestSimulateNewPolicies::test_heavy_hitter_response_well_formed PASSED [ 58%]
+tests/test_day3.py::TestSimulateNewPolicies::test_heavy_hitter_cache_bounded PASSED [ 59%]
+tests/test_day3.py::TestSimulateNewPolicies::test_heavy_hitter_policy_info PASSED [ 61%]
+tests/test_day3.py::TestSimulateNewPolicies::test_bdh_returns_200 PASSED [ 62%]
+tests/test_day3.py::TestSimulateNewPolicies::test_bdh_response_well_formed PASSED [ 63%]
+tests/test_day3.py::TestSimulateNewPolicies::test_bdh_cache_size_constant PASSED [ 65%]
+tests/test_day3.py::TestSimulateNewPolicies::test_bdh_policy_info PASSED [ 66%]
+tests/test_day3.py::TestSimulateNewPolicies::test_new_params_do_not_break_schema PASSED [ 68%]
+tests/test_day3.py::TestSimulateNewPolicies::test_invalid_decay_rejected PASSED [ 69%]
+tests/test_smoke.py::TestVocab::test_vocab_size PASSED                   [ 70%]
+tests/test_smoke.py::TestVocab::test_encode_decode_roundtrip PASSED      [ 72%]
+tests/test_smoke.py::TestVocab::test_unknown_char_maps_to_unk PASSED     [ 73%]
+tests/test_smoke.py::TestVocab::test_encode_returns_list_of_ints PASSED  [ 75%]
+tests/test_smoke.py::TestToyTransformer::test_forward_shape_no_cache PASSED [ 76%]
+tests/test_smoke.py::TestToyTransformer::test_present_cache_shapes PASSED [ 77%]
+tests/test_smoke.py::TestToyTransformer::test_forward_with_cache PASSED  [ 79%]
+tests/test_smoke.py::TestToyTransformer::test_parameter_count_reasonable PASSED [ 80%]
+tests/test_smoke.py::TestNeedleHaystack::test_generate_returns_episode PASSED [ 81%]
+tests/test_smoke.py::TestNeedleHaystack::test_token_ids_are_valid PASSED [ 83%]
+tests/test_smoke.py::TestNeedleHaystack::test_fact_positions_in_range PASSED [ 84%]
+tests/test_smoke.py::TestNeedleHaystack::test_question_start_after_facts PASSED [ 86%]
+tests/test_smoke.py::TestNeedleHaystack::test_answer_in_vault_codes PASSED [ 87%]
+tests/test_smoke.py::TestNeedleHaystack::test_too_many_facts_raises PASSED [ 88%]
+tests/test_smoke.py::TestNeedleHaystack::test_bad_question_target_raises PASSED [ 90%]
+tests/test_smoke.py::TestFullCachePolicy::test_first_call_no_past PASSED [ 91%]
+tests/test_smoke.py::TestFullCachePolicy::test_accumulates_tokens PASSED [ 93%]
+tests/test_smoke.py::TestFullCachePolicy::test_reset_clears_counter PASSED [ 94%]
+tests/test_smoke.py::TestHealthEndpoint::test_health_returns_200 PASSED  [ 95%]
+tests/test_smoke.py::TestHealthEndpoint::test_health_contains_expected_keys PASSED [ 97%]
+tests/test_smoke.py::TestHealthEndpoint::test_simulate_returns_200_or_501 PASSED [ 98%]
+tests/test_smoke.py::TestHealthEndpoint::test_step_returns_501 PASSED    [100%]
+
+============================== warnings summary ===============================
+.venv_verify\Lib\site-packages\torch\_subclasses\functional_tensor.py:368
+  C:\Users\tanti\Documents\GitHub\CacheQuake\backend\.venv_verify\Lib\site-packages\torch\_subclasses\functional_tensor.py:368: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at C:\actions-runner\_work\pytorch\pytorch\torch\csrc\utils\tensor_numpy.cpp:84.)
+    cpu = _conversion_method_template(device=torch.device("cpu"))
+
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_returns_200
+  C:\Users\tanti\Documents\GitHub\CacheQuake\backend\.venv_verify\Lib\site-packages\starlette\testclient.py:37: DeprecationWarning: The anyio.abc.BlockingPortal alias is deprecated, use anyio.from_thread.BlockingPortal instead.
+    _PortalFactoryType = typing.Callable[[], typing.ContextManager[anyio.abc.BlockingPortal]]
+
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_returns_200
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_returns_200
+tests/test_day2.py::TestSimulateEndpoint::test_full_cache_returns_200
+  C:\Users\tanti\Documents\GitHub\CacheQuake\backend\.venv_verify\Lib\site-packages\fastapi\routing.py:233: DeprecationWarning: 'asyncio.iscoroutinefunction' is deprecated and slated for removal in Python 3.16; use inspect.iscoroutinefunction() instead
+    is_coroutine = asyncio.iscoroutinefunction(dependant.call)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 72 passed, 5 warnings in 6.38s ========================

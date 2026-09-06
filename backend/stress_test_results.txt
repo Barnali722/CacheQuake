@@ -1,0 +1,83 @@
+[CacheQuake] Loaded trained weights from C:\Users\tanti\Documents\GitHub\CacheQuake\backend\model_weights\toy_transformer.pt
+======================================================================
+STRESS TEST FOR /simulate ENDPOINT
+======================================================================
+
+======================================================================
+EDGE CASE TESTS
+======================================================================
+
+[Test 1] budget=0
+  ??? Status 422 - Rejected with message: [{'type': 'greater_than_equal', 'loc': ['body', 'budget'], 'msg': 'Input should be greater than or equal to 1', 'input': 0, 'ctx': {'ge': 1}}]
+
+[Test 2] budget=1
+  ??? Status 200 - Works with budget=1
+  ??? Exception: KeyError: 'steps'
+
+[Test 3] seq_len=256 (long sequence)
+  ??? Status 200 - Completed in 812.6 ms
+  ??? Exception: KeyError: 'steps'
+
+[Test 4] invalid policy name
+  ??? Status 400 - Rejected invalid policy
+    Message: Policy 'nonexistent_policy' is not yet implemented. Available today: ['bdh_inspi
+
+[Test 5] question_target >= n_facts
+  ??? Status 400 - Rejected invalid question_target
+    Message: question_target=5 must be < n_facts=4
+
+[Test 6] malformed request (missing seq_len)
+  ??? Unexpected status 200
+
+[Test 7] empty request body
+  ??? Unexpected status 200
+
+======================================================================
+CONCURRENT REQUEST TEST
+======================================================================
+
+Sending 3 concurrent requests per policy...
+
+[full_cache]
+  Total wall time: 11.9 ms
+  Successes: 0/3
+  Avg response time: 9.8 ms
+  Max response time: 10.6 ms
+  ??? Some requests failed
+    Request 2: 422
+    Request 0: 422
+    Request 1: 422
+
+[sliding_window]
+  Total wall time: 10.3 ms
+  Successes: 0/3
+  Avg response time: 7.3 ms
+  Max response time: 8.2 ms
+  ??? Some requests failed
+    Request 0: 422
+    Request 1: 422
+    Request 2: 422
+
+[heavy_hitter]
+  Total wall time: 9.9 ms
+  Successes: 0/3
+  Avg response time: 7.8 ms
+  Max response time: 8.2 ms
+  ??? Some requests failed
+    Request 0: 422
+    Request 1: 422
+    Request 2: 422
+
+[bdh_inspired_state]
+  Total wall time: 9.7 ms
+  Successes: 0/3
+  Avg response time: 7.6 ms
+  Max response time: 8.3 ms
+  ??? Some requests failed
+    Request 0: 422
+    Request 2: 422
+    Request 1: 422
+
+======================================================================
+STRESS TEST COMPLETE
+======================================================================

@@ -1,0 +1,74 @@
+[CacheQuake] Loaded trained weights from C:\Users\tanti\Documents\GitHub\CacheQuake\backend\model_weights\toy_transformer.pt
+======================================================================
+STRESS TEST FOR /simulate ENDPOINT
+======================================================================
+
+======================================================================
+EDGE CASE TESTS
+======================================================================
+
+[Test 1] budget=0
+  ??? Status 422 - Rejected with message: [{'type': 'greater_than_equal', 'loc': ['body', 'budget'], 'msg': 'Input should be greater than or equal to 1', 'input': 0, 'ctx': {'ge': 1}}]
+
+[Test 2] budget=1
+  ??? Status 200 - Works with budget=1
+    Max cache size: 1
+
+[Test 3] seq_len=256 (long sequence)
+  ??? Status 200 - Completed in 558.4 ms
+    Steps: 332
+
+[Test 4] invalid policy name
+  ??? Status 400 - Rejected invalid policy
+    Message: Policy 'nonexistent_policy' is not yet implemented. Available today: ['bdh_inspi
+
+[Test 5] question_target >= n_facts
+  ??? Status 400 - Rejected invalid question_target
+    Message: question_target=5 must be < n_facts=4
+
+[Test 6] completely empty request body
+  ??? Status 200 - All fields have defaults, accepted empty body
+
+[Test 7] invalid field type (seq_len as string)
+  ??? Status 422 - Type validation error
+
+[Test 8] negative seq_len
+  ??? Status 422 - Range validation error
+
+======================================================================
+CONCURRENT REQUEST TEST
+======================================================================
+
+Sending 3 concurrent requests per policy...
+
+[full_cache]
+  Total wall time: 1266.2 ms
+  Successes: 3/3
+  Avg response time: 1224.3 ms
+  Max response time: 1264.7 ms
+  ??? All succeeded, acceptable concurrency handling
+
+[sliding_window]
+  Total wall time: 2311.1 ms
+  Successes: 3/3
+  Avg response time: 2110.5 ms
+  Max response time: 2309.7 ms
+  ??? All succeeded, acceptable concurrency handling
+
+[heavy_hitter]
+  Total wall time: 2949.2 ms
+  Successes: 3/3
+  Avg response time: 2942.8 ms
+  Max response time: 2946.9 ms
+  ??? All succeeded, acceptable concurrency handling
+
+[bdh_inspired_state]
+  Total wall time: 1439.8 ms
+  Successes: 3/3
+  Avg response time: 1415.7 ms
+  Max response time: 1438.3 ms
+  ??? All succeeded, acceptable concurrency handling
+
+======================================================================
+STRESS TEST COMPLETE
+======================================================================

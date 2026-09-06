@@ -184,27 +184,38 @@ class BDHInspiredState(CachePolicy):
         elif self.M.device != k.device:
             self.M = self.M.to(k.device)
 
-        # --- Write each new token into M ---------------------------------
+        # --- Write each new token into M (vectorized) ---------------------
         # We process T_new tokens (always 1 in our simulation).
-        for t in range(T_new):
-            for h in range(H):
-                # k_vec : [d_head]  — current key for head h, token t
-                k_vec = k[0, h, t, :]
-                # v_vec : [d_head]  — current value for head h, token t
-                v_vec = v[0, h, t, :]
-
-                # Soft addressing: similarity of each slot to k_vec.
-                # sim : [state_size]
-                sim  = self.M[h] @ k_vec        # dot products
-                addr = torch.softmax(sim / self._scale, dim=0)  # [state_size]
-
-                # Write: scatter v_vec into slots weighted by addr.
-                # addr[:, None] * v_vec[None, :] : [state_size, d_head]
-                write = addr[:, None] * v_vec[None, :]
-
-                # Exponential moving average: old content decays, new writes in.
-                self.M[h] = self.decay * self.M[h] + (1.0 - self.decay) * write
-                # M[h] shape stays [state_size, d_head] ✓
+        # Vectorize across both T_new and H dimensions to eliminate Python loops.
+        
+        # k: [B, H, T_new, d_head], B=1 always → squeeze batch dim
+        # v: [B, H, T_new, d_head]
+        k_in = k[0]  # [H, T_new, d_head]
+        v_in = v[0]  # [H, T_new, d_head]
+        
+        # Compute similarities for all heads and tokens at once
+        # M: [H, state_size, d_head]
+        # k_in: [H, T_new, d_head]
+        # Want: sim[h, t, s] = M[h, s, :] · k_in[h, t, :]
+        # = einsum('hsd,htd->hts', M, k_in) or use matmul
+        # M @ k_in.transpose(-2, -1) → [H, state_size, d_head] @ [H, d_head, T_new] → [H, state_size, T_new]
+        sim = torch.matmul(self.M, k_in.transpose(-2, -1))  # [H, state_size, T_new]
+        
+        # Soft addressing: softmax over state_size dimension
+        # addr: [H, state_size, T_new]
+        addr = torch.softmax(sim / self._scale, dim=1)  # softmax over state_size
+        
+        # Compute writes for all heads and tokens
+        # addr: [H, state_size, T_new]
+        # v_in: [H, T_new, d_head]
+        # Want: write[h, s, d] = sum_t addr[h, s, t] * v_in[h, t, d]
+        # = einsum('hst,htd->hsd', addr, v_in) or matmul
+        # addr @ v_in → [H, state_size, T_new] @ [H, T_new, d_head] → [H, state_size, d_head]
+        write = torch.matmul(addr, v_in)  # [H, state_size, d_head]
+        
+        # Exponential moving average update (vectorized across all heads)
+        self.M = self.decay * self.M + (1.0 - self.decay) * write
+        # M shape stays [n_heads, state_size, d_head] ✓
 
         # --- Metrics (layer 0 only to avoid double-counting) -------------
         if layer_idx == 0:

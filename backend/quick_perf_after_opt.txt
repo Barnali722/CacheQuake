@@ -1,0 +1,12 @@
+Quick Performance Test
+============================================================
+SLOW | full_cache           | seq= 64, budget= 64 |  1247.1 ms | 332 steps
+SLOW | full_cache           | seq=128, budget=128 |  1190.0 ms | 332 steps
+OK   | sliding_window       | seq= 64, budget= 32 |   902.9 ms | 332 steps
+OK   | sliding_window       | seq=128, budget= 64 |   560.6 ms | 332 steps
+OK   | heavy_hitter         | seq= 64, budget= 32 |   816.0 ms | 332 steps
+OK   | heavy_hitter         | seq=128, budget= 64 |   596.4 ms | 332 steps
+OK   | bdh_inspired_state   | seq= 64, budget= 32 |   486.2 ms | 332 steps
+OK   | bdh_inspired_state   | seq=128, budget= 64 |   475.2 ms | 332 steps
+============================================================
+Done
