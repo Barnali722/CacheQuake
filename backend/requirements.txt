@@ -1,9 +1,20 @@
-# CacheQuake backend — Python 3.11, CPU-only PyTorch
-# Pin exact minor versions so the Hugging Face Space build is reproducible.
+# CacheQuake backend — Python 3.11–3.14, CPU-only PyTorch
+# Verified: clean pip install works on Python 3.14.4 (Windows) — no source
+# compilation required; all packages have prebuilt cp314 wheels.
+#
+# Why version bumps from the original pins:
+#   pydantic==2.7.4   — pydantic-core has no prebuilt cp314 wheel; source build
+#                       fails without a Rust toolchain. Fixed by bumping to 2.13.5
+#                       where pydantic-core ships a cp314 wheel.
+#   fastapi==0.111.1  — bumped alongside pydantic; 0.115.x is the current stable
+#                       series, requires pydantic>=1.7.4,<3.0.0 (compatible).
+#   uvicorn==0.30.1   — bumped to current stable (no API changes relevant to us).
+#   httpx==0.27.0     — bumped to current stable with cp314 wheel.
+#   pytest pin kept   — pytest 8.2.2 is pure-Python, no wheel issue.
 
-torch>=2.3.0          # CPU-only; tested on 2.3.1+, no CUDA needed
-fastapi==0.111.1
-uvicorn[standard]==0.30.1
-pydantic==2.7.4
-httpx==0.27.0          # for testing FastAPI endpoints
+torch>=2.3.0              # CPU-only; tested on 2.3.1+, no CUDA needed
+fastapi==0.115.12
+uvicorn[standard]==0.34.3
+pydantic==2.13.5
+httpx==0.28.1             # for testing FastAPI endpoints via starlette TestClient
 pytest==8.2.2

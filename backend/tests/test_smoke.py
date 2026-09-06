@@ -54,9 +54,10 @@ class TestVocab:
 
 class TestToyTransformer:
     @pytest.fixture(scope="class")
-    def model(self):
+    @classmethod
+    def model(cls):
         from app.model.toy_transformer import ToyTransformer
-        m = ToyTransformer(vocab_size=40, d_model=64, n_heads=4,
+        m = ToyTransformer(vocab_size=44, d_model=64, n_heads=4,
                            n_layers=4, max_seq_len=512)
         m.eval()
         return m
@@ -64,11 +65,11 @@ class TestToyTransformer:
     def test_forward_shape_no_cache(self, model):
         """Basic forward pass without any cache."""
         B, T = 2, 16
-        ids = torch.randint(0, 40, (B, T))
+        ids = torch.randint(0, 44, (B, T))
         with torch.no_grad():
             logits, present_caches = model(ids)
 
-        assert logits.shape == (B, T, 40), \
+        assert logits.shape == (B, T, 44), \
             f"logits shape mismatch: {logits.shape}"
         assert len(present_caches) == 4, \
             f"expected 4 present_caches, got {len(present_caches)}"
@@ -93,7 +94,7 @@ class TestToyTransformer:
         H, d_head = 4, 16
 
         # Prefill
-        prefill_ids = torch.randint(0, 40, (B, T_prefill))
+        prefill_ids = torch.randint(0, 44, (B, T_prefill))
         with torch.no_grad():
             _, present_caches = model(prefill_ids)
 
@@ -107,7 +108,7 @@ class TestToyTransformer:
             logits, step_caches = model(step_ids, past_caches=past_caches)
 
         # Logits should be for the single new token
-        assert logits.shape == (B, T_step, 40)
+        assert logits.shape == (B, T_step, 44)
         # New K/V should cover only the new token
         k_new, v_new = step_caches[0]
         assert k_new.shape == (B, H, T_step, d_head)
@@ -126,7 +127,8 @@ class TestToyTransformer:
 
 class TestNeedleHaystack:
     @pytest.fixture(scope="class")
-    def task(self):
+    @classmethod
+    def task(cls):
         from app.tasks.needle_haystack import NeedleHaystackTask
         return NeedleHaystackTask(seed=99)
 
@@ -243,12 +245,16 @@ class TestHealthEndpoint:
         assert "cache_policies" in data
         assert len(data["cache_policies"]) == 4
 
-    def test_simulate_returns_501(self):
+    def test_simulate_returns_200_or_501(self):
+        """Smoke-check /simulate is reachable — full contract tested in test_day2.py."""
         from fastapi.testclient import TestClient
         from app.main import app
         client = TestClient(app)
-        resp = client.post("/simulate")
-        assert resp.status_code == 501
+        resp = client.post("/simulate",
+                           json={"policy": "full_cache", "n_facts": 1,
+                                 "seq_len": 64, "question_target": 0, "seed": 1})
+        # Accept 200 (implemented) or 501 (still stub) — both are valid here.
+        assert resp.status_code in (200, 501)
 
     def test_step_returns_501(self):
         from fastapi.testclient import TestClient

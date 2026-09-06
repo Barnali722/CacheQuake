@@ -15,7 +15,7 @@ Architecture summary
   - Final LayerNorm → linear head → logits over vocabulary
 
 Confirmed spec (DataForge 2026 hackathon):
-  vocab_size  = 40      (from vocab.py)
+  vocab_size  = 44      (from vocab.py — 42 printable + PAD + UNK)
   d_model     = 64
   n_heads     = 4       → d_head = 16
   n_layers    = 4
@@ -177,6 +177,7 @@ class ToyTransformer(nn.Module):
         super().__init__()
 
         self.d_model     = d_model
+        self.n_heads     = n_heads    # stored so model_info() can return it
         self.n_layers    = n_layers
         self.max_seq_len = max_seq_len
 
@@ -308,7 +309,7 @@ class ToyTransformer(nn.Module):
         """Return a summary dict for the /health endpoint."""
         return {
             "d_model":      self.d_model,
-            "n_heads":      self.n_layers,  # yes, n_heads stored at init
+            "n_heads":      self.n_heads,   # fixed: was mistakenly returning n_layers
             "n_layers":     self.n_layers,
             "max_seq_len":  self.max_seq_len,
             "n_parameters": self.count_parameters(),
