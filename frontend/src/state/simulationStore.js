@@ -169,23 +169,31 @@ export function SimulationProvider({ children }) {
       });
       dispatch({ type: 'SET_RESULT', payload: response });
 
-      // Load precomputed curve (separate static-file fetch, not a live sim call)
-      try {
-        const curve = await loadAccuracyVsBudget();
-        const bdh   = await loadBDHPublishedClaims();
-        dispatch({
-          type: 'SET_PRECOMPUTED',
-          payload: { accuracyVsBudget: curve, bdhPublishedClaims: bdh },
-        });
-      } catch (precomputedErr) {
-        // Precomputed data failing is not a blocking error — log, don't crash
-        console.warn('Could not load precomputed data:', precomputedErr.message);
+      // Load precomputed curve only if not already cached in the store.
+      // Agent 3 response-time fix: the curve is a static file — no need to re-fetch
+      // on every simulation. First load costs one HTTP request; subsequent runs are free.
+      const alreadyCached =
+        state.precomputed.accuracyVsBudget.length > 0 &&
+        state.precomputed.bdhPublishedClaims !== null;
+
+      if (!alreadyCached) {
+        try {
+          const curve = await loadAccuracyVsBudget();
+          const bdh   = await loadBDHPublishedClaims();
+          dispatch({
+            type: 'SET_PRECOMPUTED',
+            payload: { accuracyVsBudget: curve, bdhPublishedClaims: bdh },
+          });
+        } catch (precomputedErr) {
+          // Precomputed data failing is not a blocking error — log, don't crash
+          console.warn('Could not load precomputed data:', precomputedErr.message);
+        }
       }
     } catch (err) {
       // Surface backend errors visibly — no silent mock fallback
       dispatch({ type: 'SET_ERROR', payload: err.message });
     }
-  }, [state.controls]);
+  }, [state.controls, state.precomputed.accuracyVsBudget, state.precomputed.bdhPublishedClaims]);
 
   /**
    * applyWalkthroughStep — drives controls from GuidedWalkthrough steps.
