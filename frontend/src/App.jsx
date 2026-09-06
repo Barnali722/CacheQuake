@@ -16,7 +16,7 @@ import AccuracyPanel from './components/AccuracyPanel';
 import GuidedWalkthrough from './components/GuidedWalkthrough';
 import BDHModule from './components/BDHModule';
 import Sandbox from './components/Sandbox';
-import '../styles/index.css';
+import './styles/index.css';
 
 // ─── Styles (desktop — mobile overrides live in index.css) ───────────────────
 const appStyles = {

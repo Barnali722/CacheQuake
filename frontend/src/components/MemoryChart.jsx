@@ -173,7 +173,6 @@ function MemoryChart({
       <div style={styles.header}>
         <span style={styles.title}>Memory Footprint</span>
         <span style={styles.liveLabel}>LIVE</span>
-        {isMock && <span style={styles.mockLabel}>MOCK DATA</span>}
       </div>
 
       {/* Stats */}

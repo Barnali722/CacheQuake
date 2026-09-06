@@ -1,0 +1,26 @@
+# Dependencies and build output
+frontend/node_modules/
+frontend/dist/
+backend/__pycache__/
+backend/.venv/
+backend/venv/
+*.pyc
+*.pyo
+
+# Environment files (may contain secrets)
+frontend/.env.local
+frontend/.env.*.local
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
