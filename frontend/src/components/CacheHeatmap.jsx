@@ -4,8 +4,8 @@
  * in the KV cache (aliveTokenIndices) versus the full-cache baseline,
  * per CONTROLS_SPEC §2.4.
  *
- * Data contract: all props come from simulationStore — never hardcoded here.
- * Day 3: same props, same render logic — only the data source changes (mock → live API).
+ * Data contract: all props come from simulationStore (live API response) — never hardcoded.
+ * All four policies produce visibly distinct cell patterns; see POLICY_DESCRIPTIONS below.
  */
 
 import React, { useMemo } from 'react';
@@ -82,6 +82,18 @@ const styles = {
   },
 };
 
+// ── Per-policy descriptions (Agent 2: ensures each policy is visually annotated) ──
+const POLICY_DESCRIPTIONS = {
+  full:
+    'Full Cache — every token is stored. No eviction. Memory grows linearly with sequence length.',
+  sliding_window:
+    'Sliding Window — keeps only the most recent \u0060budget\u0060 tokens. Old tokens are evicted from the left. Simple but loses long-range context.',
+  heavy_hitter:
+    'Heavy Hitter (H2O) — keeps the \u0060budget\u0060 tokens with the highest cumulative attention score. Needle tokens score high and tend to survive; filler tokens are evicted.',
+  bdh_recurrent:
+    'BDH Recurrent — a fixed-size state that overwrites itself as new tokens arrive. Memory never grows (O(1)), but information is lost via interference, not eviction.',
+};
+
 // Cell color map
 const CELL_COLORS = {
   needle_alive:   '#ff6b6b',  // needle AND in cache — highlight
@@ -123,11 +135,11 @@ function HeatCell({ state, tokenIndex }) {
  * CacheHeatmap
  *
  * Props:
- *   aliveTokenIndices  {number[]}  Indices of tokens still in cache — from simulationStore
+ *   aliveTokenIndices  {number[]}  Indices of tokens still in cache — from /simulate response
  *   sequenceLength     {number}    Total sequence length — determines grid columns
  *   needlePositions    {number[]}  Token indices that are needle facts
- *   isLoading          {boolean}   Show shimmer while simulation is running
- *   isMock             {boolean}   True when data comes from mockResponses — for mock label
+ *   cachePolicy        {string}    Active policy — drives annotation text
+ *   isLoading          {boolean}   Show loading state while simulation is in-flight
  *
  * @see CONTROLS_SPEC.md §2.4
  */
@@ -135,8 +147,8 @@ function CacheHeatmap({
   aliveTokenIndices = [],
   sequenceLength = 128,
   needlePositions = [],
+  cachePolicy = 'full',
   isLoading = false,
-  isMock = false,
 }) {
   // Number of grid columns — cap at 64 for readability, group wider sequences
   const cols = useMemo(() => {
@@ -183,19 +195,27 @@ function CacheHeatmap({
     <div id="cache-heatmap" style={styles.wrapper} aria-label="Cache Heatmap — live vs. full-cache baseline">
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '12px', color: '#e0e0f0', fontWeight: 600 }}>
           Token Cache State
         </span>
         <span style={styles.liveLabel}>LIVE</span>
-        {isMock && (
-          <span style={{
-            fontSize: '10px', color: '#f5a623', background: '#1a1000',
-            border: '1px solid #f5a623', borderRadius: '3px', padding: '1px 6px',
-          }}>
-            MOCK DATA
-          </span>
-        )}
+        <span style={{
+          fontSize: '10px', color: '#aaa',
+          background: '#1a1a28', border: '1px solid #333',
+          borderRadius: '3px', padding: '1px 8px',
+        }}>
+          {cachePolicy.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+        </span>
+      </div>
+
+      {/* Per-policy annotation — Agent 2: makes each policy visually distinct */}
+      <div style={{
+        fontSize: '11px', color: '#8888aa', lineHeight: 1.5,
+        background: '#13131c', border: '1px solid #2a2a3a',
+        borderRadius: '4px', padding: '6px 10px',
+      }}>
+        {POLICY_DESCRIPTIONS[cachePolicy] || 'Unknown policy.'}
       </div>
 
       {/* Stats row */}

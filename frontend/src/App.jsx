@@ -147,12 +147,8 @@ function AppInner() {
       )}
 
       {/* ── Guided Walkthrough Banner ── */}
-      <GuidedWalkthrough
-        currentStep={ui.walkthroughStep}
-        onNext={() => dispatch({ type: 'ADVANCE_WALKTHROUGH' })}
-        onBack={() => dispatch({ type: 'BACK_WALKTHROUGH' })}
-        onSkip={() => dispatch({ type: 'UNLOCK_SANDBOX' })}
-      />
+      {/* GuidedWalkthrough reads state directly via useSimulation — no props needed */}
+      <GuidedWalkthrough />
 
       {/* ── Main 3-column grid ── */}
       <div style={appStyles.mainGrid}>
@@ -167,8 +163,8 @@ function AppInner() {
               aliveTokenIndices={result.aliveTokenIndices}
               sequenceLength={controls.sequenceLength}
               needlePositions={result.needlePositions}
+              cachePolicy={controls.cachePolicy}
               isLoading={ui.isLoading}
-              isMock={ui.isMock}
             />
           </div>
           <div style={appStyles.chartPane}>
@@ -178,7 +174,6 @@ function AppInner() {
               cachePolicy={controls.cachePolicy}
               sequenceLength={controls.sequenceLength}
               isLoading={ui.isLoading}
-              isMock={ui.isMock}
             />
           </div>
         </div>

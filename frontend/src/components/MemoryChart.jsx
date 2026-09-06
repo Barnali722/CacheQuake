@@ -107,12 +107,11 @@ function toSVGPoints(values, maxVal, chartW, chartH, pad) {
  * MemoryChart
  *
  * Props:
- *   cacheSizeHistory    {number[]}  Per-step cache_size_tokens — from simulationStore
- *   baselineHistory     {number[]}  Per-step full_cache_baseline_tokens — from simulationStore
+ *   cacheSizeHistory    {number[]}  Per-step cache_size_tokens — from /simulate response
+ *   baselineHistory     {number[]}  Per-step full_cache_baseline_tokens — from /simulate response
  *   cachePolicy         {string}    Current policy — drives line color
  *   sequenceLength      {number}    Total steps on X axis
  *   isLoading           {boolean}   Show placeholder while simulating
- *   isMock              {boolean}   True when data is from mockResponses
  *
  * @see CONTROLS_SPEC.md §2.1
  */
@@ -122,7 +121,6 @@ function MemoryChart({
   cachePolicy = 'full',
   sequenceLength = 128,
   isLoading = false,
-  isMock = false,
 }) {
   const lineColor = POLICY_COLOR[cachePolicy] || '#7b8cff';
 

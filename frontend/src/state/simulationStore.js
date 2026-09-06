@@ -4,18 +4,18 @@
  * the four control values and the last simulation result — so all components
  * read from and write to one shared source of truth.
  *
- * Day 2: Implemented as React Context + useReducer (no external library).
- * Day 3: Swap dispatch({ type: 'SET_RESULT', payload: response }) callers to
- *         use the real API; zero changes needed in this file or in components.
+ * Day 3: runSimulation() calls the real backend via api/client.js.
+ * mockResponses.js is no longer imported here — it is quarantined in __mocks__/.
+ * If the backend is unreachable, errorMessage is set and surfaced visibly in the UI.
  *
  * Variable names exactly match CONTROLS_SPEC.md §5 (Variable to API Mapping Summary).
  */
 
 import React, { createContext, useContext, useReducer, useCallback } from 'react';
-import { getMockResponse, getMockAccuracyVsBudgetCurve, MOCK_BDH_PUBLISHED_CLAIMS } from '../api/mockResponses';
+import { simulate, loadAccuracyVsBudget, loadBDHPublishedClaims } from '../api/client';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Initial state shape — variable names match CONTROLS_SPEC §5
+// Initial state — variable names match CONTROLS_SPEC §5
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const DEFAULT_CONTROLS = {
@@ -32,7 +32,6 @@ export const DEFAULT_SIMULATION_RESULT = {
   modelAnswers:            [],
   correctAnswers:          [],
   accuracyScore:           null,
-  // Extended fields for chart history (per-step arrays)
   cacheSizeHistory:        [],
   baselineHistory:         [],
   needlePositions:         [],
@@ -44,11 +43,11 @@ export const DEFAULT_PRECOMPUTED = {
 };
 
 export const DEFAULT_UI = {
-  walkthroughStep: 1,
-  sandboxUnlocked: false,
-  isLoading:       false,
-  errorMessage:    null,
-  isMock:          true,   // Day 3: set false when wired to real backend
+  walkthroughStep:  1,
+  sandboxUnlocked:  false,
+  isLoading:        false,
+  errorMessage:     null,
+  isMock:           false,  // Day 3: always false — real backend only
 };
 
 export const INITIAL_STATE = {
@@ -73,30 +72,40 @@ function reducer(state, action) {
       };
     }
 
+    case 'SET_CONTROLS_BATCH':
+      // Used by GuidedWalkthrough to set multiple controls atomically
+      return {
+        ...state,
+        controls: { ...state.controls, ...action.payload },
+      };
+
     case 'SET_LOADING':
       return { ...state, ui: { ...state.ui, isLoading: action.payload, errorMessage: null } };
 
     case 'SET_RESULT': {
-      const r = action.payload; // raw API response fields (snake_case from API)
+      const r = action.payload;
       return {
         ...state,
         result: {
-          cacheSizeTokens:         r.cache_size_tokens,
-          fullCacheBaselineTokens: r.full_cache_baseline_tokens,
-          aliveTokenIndices:       r.alive_token_indices       ?? [],
-          modelAnswers:            r.model_answers             ?? [],
-          correctAnswers:          r.ground_truth_answers      ?? [],
-          accuracyScore:           r.accuracy_score            ?? null,
-          cacheSizeHistory:        r.cache_size_history        ?? [],
-          baselineHistory:         r.baseline_history          ?? [],
-          needlePositions:         r.needle_positions          ?? [],
+          cacheSizeTokens:         r.cache_size_tokens          ?? null,
+          fullCacheBaselineTokens: r.full_cache_baseline_tokens ?? null,
+          aliveTokenIndices:       r.alive_token_indices        ?? [],
+          modelAnswers:            r.model_answers              ?? [],
+          correctAnswers:          r.ground_truth_answers       ?? [],
+          accuracyScore:           r.accuracy_score             ?? null,
+          cacheSizeHistory:        r.cache_size_history         ?? [],
+          baselineHistory:         r.baseline_history           ?? [],
+          needlePositions:         r.needle_positions           ?? [],
         },
-        ui: { ...state.ui, isLoading: false, errorMessage: null, isMock: r.__mock === true },
+        ui: { ...state.ui, isLoading: false, errorMessage: null, isMock: false },
       };
     }
 
     case 'SET_ERROR':
-      return { ...state, ui: { ...state.ui, isLoading: false, errorMessage: action.payload } };
+      return {
+        ...state,
+        ui: { ...state.ui, isLoading: false, errorMessage: action.payload },
+      };
 
     case 'SET_PRECOMPUTED':
       return { ...state, precomputed: { ...state.precomputed, ...action.payload } };
@@ -104,19 +113,19 @@ function reducer(state, action) {
     case 'ADVANCE_WALKTHROUGH':
       return {
         ...state,
-        ui: {
-          ...state.ui,
-          walkthroughStep: Math.min(state.ui.walkthroughStep + 1, 5),
-        },
+        ui: { ...state.ui, walkthroughStep: Math.min(state.ui.walkthroughStep + 1, 5) },
       };
 
     case 'BACK_WALKTHROUGH':
       return {
         ...state,
-        ui: {
-          ...state.ui,
-          walkthroughStep: Math.max(state.ui.walkthroughStep - 1, 1),
-        },
+        ui: { ...state.ui, walkthroughStep: Math.max(state.ui.walkthroughStep - 1, 1) },
+      };
+
+    case 'SET_WALKTHROUGH_STEP':
+      return {
+        ...state,
+        ui: { ...state.ui, walkthroughStep: action.payload },
       };
 
     case 'UNLOCK_SANDBOX':
@@ -135,67 +144,62 @@ const SimulationContext = createContext(null);
 
 /**
  * SimulationProvider — wrap the app root with this.
- * Provides state and dispatch to all child components.
  */
 export function SimulationProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, INITIAL_STATE);
 
   /**
-   * runSimulation — called by ControlPanel on any control change.
-   * Day 2: calls getMockResponse (mock-backed).
-   * Day 3: swap getMockResponse for the real simulate() from api/client.js.
+   * runSimulation — called by ControlPanel and GuidedWalkthrough on control change.
+   * Calls the real backend via api/client.js simulate().
+   * On error: sets errorMessage in UI state — never silently falls back to mock data.
    *
-   * @param {object} overrides  Optional partial control overrides (applied before the call)
+   * @param {object} overrides  Optional partial control overrides applied before the call.
    */
   const runSimulation = useCallback(async (overrides = {}) => {
-    // Merge current controls with any overrides from the control that just changed
     const controls = { ...state.controls, ...overrides };
 
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // ── Day 2: MOCK ─────────────────────────────────────────────────────
-      // Replace this block on Day 3 with:
-      //   import { simulate } from '../api/client';
-      //   const response = await simulate({ policy: controls.cachePolicy, budget: controls.budgetSize, ... });
-      const response = await new Promise((resolve) =>
-        setTimeout(
-          () =>
-            resolve(
-              getMockResponse({
-                policy:      controls.cachePolicy,
-                budget:      controls.budgetSize,
-                seq_len:     controls.sequenceLength,
-                num_needles: controls.needleCount,
-              })
-            ),
-          120 // simulate ~120ms network latency
-        )
-      );
-      // ── End mock block ───────────────────────────────────────────────────
-
+      // ── Real backend call ──────────────────────────────────────────────────
+      const response = await simulate({
+        policy:      controls.cachePolicy,
+        budget:      controls.budgetSize,
+        seq_len:     controls.sequenceLength,
+        num_needles: controls.needleCount,
+      });
       dispatch({ type: 'SET_RESULT', payload: response });
 
-      // Also refresh the precomputed accuracy-vs-budget curve for the new policy
-      // Day 3: replace getMockAccuracyVsBudgetCurve with loadAccuracyVsBudget() fetch
-      const curve = getMockAccuracyVsBudgetCurve(
-        controls.cachePolicy,
-        controls.sequenceLength,
-        controls.needleCount
-      );
-      dispatch({
-        type: 'SET_PRECOMPUTED',
-        payload: {
-          accuracyVsBudget:   curve,
-          bdhPublishedClaims: MOCK_BDH_PUBLISHED_CLAIMS,
-        },
-      });
+      // Load precomputed curve (separate static-file fetch, not a live sim call)
+      try {
+        const curve = await loadAccuracyVsBudget();
+        const bdh   = await loadBDHPublishedClaims();
+        dispatch({
+          type: 'SET_PRECOMPUTED',
+          payload: { accuracyVsBudget: curve, bdhPublishedClaims: bdh },
+        });
+      } catch (precomputedErr) {
+        // Precomputed data failing is not a blocking error — log, don't crash
+        console.warn('Could not load precomputed data:', precomputedErr.message);
+      }
     } catch (err) {
+      // Surface backend errors visibly — no silent mock fallback
       dispatch({ type: 'SET_ERROR', payload: err.message });
     }
   }, [state.controls]);
 
+  /**
+   * applyWalkthroughStep — drives controls from GuidedWalkthrough steps.
+   * Sets controls in the store AND runs a new simulation, so readouts update.
+   *
+   * @param {object} controlOverrides  e.g. { cachePolicy: 'sliding_window', budgetSize: 64 }
+   */
+  const applyWalkthroughStep = useCallback(async (controlOverrides) => {
+    dispatch({ type: 'SET_CONTROLS_BATCH', payload: controlOverrides });
+    await runSimulation(controlOverrides);
+  }, [runSimulation]);
+
   return (
-    <SimulationContext.Provider value={{ state, dispatch, runSimulation }}>
+    <SimulationContext.Provider value={{ state, dispatch, runSimulation, applyWalkthroughStep }}>
       {children}
     </SimulationContext.Provider>
   );
@@ -203,7 +207,6 @@ export function SimulationProvider({ children }) {
 
 /**
  * useSimulation — hook to access state and actions from any component.
- * Returns { state, dispatch, runSimulation }.
  */
 export function useSimulation() {
   const ctx = useContext(SimulationContext);
@@ -211,5 +214,5 @@ export function useSimulation() {
   return ctx;
 }
 
-// Keep legacy export for backwards compatibility with Day 1 imports
-export const simulationStore = null; // replaced by SimulationProvider + useSimulation
+// Legacy export — kept for any import that hasn't been updated
+export const simulationStore = null;

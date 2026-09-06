@@ -3,25 +3,52 @@
  * Single responsibility: Thin wrapper around the backend API endpoints.
  * All network calls go through this file — components never fetch directly.
  *
- * Day 2: simulate() and loadAccuracyVsBudget() are backed by mockResponses.js.
- *        The exported function signatures are IDENTICAL to what the real backend requires.
- *        Day 3 swap: remove the mock import lines and uncomment the fetch() blocks.
+ * Day 3: All functions call the real backend. mockResponses.js is quarantined
+ * in src/api/__mocks__/ and is NOT imported here. If the backend is not ready,
+ * a visible API error is surfaced in the UI (via simulationStore's errorMessage),
+ * rather than silently falling back to mocks — which would blur live vs. precomputed.
  *
  * Endpoint reference: backend/app/api/routes.py
  * Request/response schemas: backend/app/api/schemas.py
  * Variable names: CONTROLS_SPEC.md §5
  */
 
-// ── Day 2 mock imports — REMOVE these on Day 3 ──────────────────────────────
-import {
-  getMockResponse,
-  getMockAccuracyVsBudgetCurve,
-  MOCK_BDH_PUBLISHED_CLAIMS,
-} from './mockResponses';
-// ── End Day 2 mock imports ───────────────────────────────────────────────────
+const API_BASE =
+  (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
+  'http://localhost:8000';
 
-const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL)
-  || 'http://localhost:8000';
+// ─── Shared fetch helper ──────────────────────────────────────────────────────
+
+/**
+ * Thin fetch wrapper: throws a descriptive Error on non-2xx so callers
+ * can catch and surface it in the UI rather than silently failing.
+ * Never falls back to mock data — per Day 3 honesty constraint.
+ */
+async function apiFetch(path, options = {}) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      ...options,
+    });
+  } catch (networkErr) {
+    throw new Error(
+      `Network error — could not reach backend at ${API_BASE}${path}. ` +
+      `Is the backend running? (${networkErr.message})`
+    );
+  }
+
+  if (!res.ok) {
+    let body = '';
+    try { body = await res.text(); } catch (_) { /* ignore */ }
+    throw new Error(
+      `API error ${res.status} ${res.statusText} on ${path}` +
+      (body ? `: ${body.slice(0, 200)}` : '')
+    );
+  }
+
+  return res.json();
+}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // POST /simulate
@@ -31,26 +58,19 @@ const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_AP
  * Run a full simulation with the given parameters.
  *
  * @param {object} params
- * @param {string} params.policy         - cachePolicy: "full"|"sliding_window"|"heavy_hitter"|"bdh_recurrent"
- * @param {number} params.budget         - budgetSize: integer 8–512
- * @param {number} params.seq_len        - sequenceLength: integer 32–512
- * @param {number} params.num_needles    - needleCount: integer 1–5
+ * @param {string} params.policy       - "full"|"sliding_window"|"heavy_hitter"|"bdh_recurrent"
+ * @param {number} params.budget       - integer 8–512
+ * @param {number} params.seq_len      - integer 32–512
+ * @param {number} params.num_needles  - integer 1–5
  *
  * @returns {Promise<SimulateResponse>}
  * @see CONTROLS_SPEC.md §5
  */
 export async function simulate(params) {
-  // ── Day 2 MOCK — replace this block on Day 3 ────────────────────────────
-  return getMockResponse(params);
-  // ── Day 3 REAL — uncomment this block when backend is ready ─────────────
-  // const res = await fetch(`${API_BASE}/simulate`, {
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json' },
-  //   body: JSON.stringify(params),
-  // });
-  // if (!res.ok) throw new Error(`/simulate failed: ${res.status} ${res.statusText}`);
-  // return res.json();
-  // ── End Day 3 block ───────────────────────────────────────────────────────
+  return apiFetch('/simulate', {
+    method: 'POST',
+    body: JSON.stringify(params),
+  });
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -58,17 +78,14 @@ export async function simulate(params) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch a single generation step's cache state.
+ * Fetch a single generation step's cache state (for step-by-step animation).
+ *
  * @param {string} sessionId
  * @param {number} stepIndex
  * @returns {Promise<StepResponse>}
  */
 export async function getStep(sessionId, stepIndex) {
-  // Day 3 implementation:
-  // const res = await fetch(`${API_BASE}/step/${sessionId}/${stepIndex}`);
-  // if (!res.ok) throw new Error(`/step failed: ${res.status}`);
-  // return res.json();
-  throw new Error('getStep() — not implemented until Day 3 (live backend).');
+  return apiFetch(`/step/${sessionId}/${stepIndex}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -76,49 +93,38 @@ export async function getStep(sessionId, stepIndex) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch comparison data for all four policies.
+ * Fetch comparison data for all four policies at the same seq_len and budget.
+ *
  * @param {{ budget: number, seq_len: number }} params
  * @returns {Promise<CompareResponse>}
  */
 export async function compare(params) {
-  // Day 3 implementation:
-  // const res = await fetch(`${API_BASE}/compare?${new URLSearchParams(params)}`);
-  // if (!res.ok) throw new Error(`/compare failed: ${res.status}`);
-  // return res.json();
-  throw new Error('compare() — not implemented until Day 3 (live backend).');
+  const qs = new URLSearchParams(params).toString();
+  return apiFetch(`/compare?${qs}`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Precomputed data loaders
+// Precomputed data loaders — load JSON files, NOT the backend API
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Load the precomputed accuracy-vs-budget sweep curve.
+ * Source: /data/precomputed/accuracy_vs_budget.json (served as a static asset).
  * Must be displayed with PrecomputedBadge (CONTROLS_SPEC §3 placement #1).
  *
- * @param {string} policy
- * @param {number} seq_len
- * @param {number} num_needles
  * @returns {Promise<Array<{budget: number, accuracy: number}>>}
  */
-export async function loadAccuracyVsBudget(policy, seq_len, num_needles) {
-  // ── Day 2 MOCK — replace on Day 3 ───────────────────────────────────────
-  return getMockAccuracyVsBudgetCurve(policy, seq_len, num_needles);
-  // ── Day 3 REAL ────────────────────────────────────────────────────────────
-  // const res = await fetch('/data/precomputed/accuracy_vs_budget.json');
-  // return res.json();
+export async function loadAccuracyVsBudget() {
+  return apiFetch('/data/precomputed/accuracy_vs_budget.json', { method: 'GET' });
 }
 
 /**
  * Load BDH published claims.
+ * Source: /data/precomputed/bdh_published_claims.json (static asset).
  * Must be displayed with PrecomputedBadge (CONTROLS_SPEC §3 placement #2).
  *
  * @returns {Promise<object>}
  */
 export async function loadBDHPublishedClaims() {
-  // ── Day 2 MOCK — replace on Day 3 ───────────────────────────────────────
-  return MOCK_BDH_PUBLISHED_CLAIMS;
-  // ── Day 3 REAL ────────────────────────────────────────────────────────────
-  // const res = await fetch('/data/precomputed/bdh_published_claims.json');
-  // return res.json();
+  return apiFetch('/data/precomputed/bdh_published_claims.json', { method: 'GET' });
 }
