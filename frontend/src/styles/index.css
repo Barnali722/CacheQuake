@@ -1,0 +1,279 @@
+/* styles/index.css
+ * Global CSS resets, design tokens, and mobile-responsive layout rules.
+ * Day 4: Full mobile polish — audited at 375px and 414px.
+ *
+ * Mobile audit findings:
+ *   - 3-column grid (260px + 1fr + 300px) breaks below ~800px — switched to stack
+ *   - Heat-map cells at 64 cols × 2px gap become sub-3px at 375px — collapse to 32 cols
+ *   - Sliders need minHeight 44px touch target (iOS HIG)
+ *   - Guided walkthrough banner needs to stack vertically on narrow screens
+ *   - Top bar claim pill hidden on phone — too dense, shows title only
+ *   - Sandbox 3-col grid collapses to single column on mobile
+ */
+
+/* ── Google Fonts ─────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* ── Design Tokens ────────────────────────────────────────────────────── */
+:root {
+  /* Colors */
+  --color-bg-base:        #0f0f14;
+  --color-bg-surface:     #13131c;
+  --color-bg-elevated:    #1a1a28;
+  --color-border:         #2a2a3a;
+  --color-text-primary:   #e0e0f0;
+  --color-text-secondary: #aaaacc;
+  --color-text-muted:     #666680;
+
+  /* Accent colors */
+  --color-accent-primary: #7b8cff;  /* live controls, active states */
+  --color-accent-live:    #3dffa0;  /* LIVE badge, alive tokens */
+  --color-accent-needle:  #ff6b6b;  /* needle token highlight */
+  --color-accent-precomp: #f5a623;  /* PrecomputedBadge orange */
+  --color-accent-correct: #3dffa0;
+  --color-accent-wrong:   #ff6b6b;
+
+  /* Typography */
+  --font-ui:   'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+  /* Spacing */
+  --space-xs:  4px;
+  --space-sm:  8px;
+  --space-md:  16px;
+  --space-lg:  24px;
+  --space-xl:  40px;
+
+  /* Border radius */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+
+  /* Touch target minimum (iOS HIG) */
+  --touch-min: 44px;
+}
+
+/* ── Reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  /* prevent horizontal scroll on mobile */
+  overflow-x: hidden;
+}
+
+/* ── Touch target: all interactive elements ────────────────────────────── */
+button, input[type="range"] {
+  min-height: var(--touch-min);
+  touch-action: manipulation;
+}
+
+/* Range inputs specifically */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--color-border);
+  outline: none;
+  cursor: pointer;
+  /* Vertically centered in its 44px touch zone via padding */
+  padding: 19px 0;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  cursor: pointer;
+  border: 2px solid #0f0f14;
+  box-shadow: 0 0 0 3px rgba(123,140,255,0.2);
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--color-accent-primary);
+  cursor: pointer;
+  border: 2px solid #0f0f14;
+}
+
+/* ── App layout grid — responsive ─────────────────────────────────────── */
+
+/* Desktop: 3-column fixed */
+#app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Main 3-column grid */
+.main-grid {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ── Guided Walkthrough banner mobile ─────────────────────────────────── */
+#guided-walkthrough {
+  /* on narrow screens, stack narration below dots+buttons */
+  flex-wrap: wrap;
+}
+
+/* ── Top bar — hide claim pill on narrow screens ──────────────────────── */
+@media (max-width: 600px) {
+  .topbar-claim-pill {
+    display: none !important;
+  }
+  .topbar-track-tag {
+    display: none !important;
+  }
+}
+
+/* ── Tablet/mobile breakpoint: below 800px ────────────────────────────── */
+@media (max-width: 800px) {
+  .main-grid,
+  #sandbox .sandbox-body {
+    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Control panel becomes horizontal drawer at top on mobile */
+  #control-panel {
+    border-right: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    min-width: unset !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 12px !important;
+    overflow-x: auto !important;
+  }
+
+  #control-panel > div {
+    flex: 0 0 auto;
+    min-width: 140px;
+  }
+
+  /* Heat-map: reduce columns so cells remain tappable at 375px */
+  /* CacheHeatmap uses gridTemplateColumns via inline style;
+     this rule overrides the min cell size for legibility */
+  #cache-heatmap .heatmap-grid {
+    grid-template-columns: repeat(32, 1fr) !important;
+  }
+
+  /* Walkthrough banner stacks on mobile */
+  #guided-walkthrough {
+    flex-direction: column !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  /* Step dots go horizontal, centered */
+  .step-dots-row {
+    justify-content: center !important;
+  }
+
+  /* Sandbox columns collapse */
+  #sandbox {
+    flex-direction: column !important;
+  }
+
+  #sandbox .sandbox-body {
+    flex-direction: column !important;
+  }
+
+  #sandbox .controls-pane {
+    border-right: none !important;
+    border-bottom: 1px solid var(--color-border) !important;
+  }
+
+  /* AccuracyPanel curve SVG scales correctly */
+  #accuracy-panel svg {
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* MemoryChart SVG scales */
+  #memory-chart svg {
+    width: 100% !important;
+  }
+}
+
+/* ── Phone breakpoint: 375px ─────────────────────────────────────────── */
+@media (max-width: 430px) {
+  body {
+    font-size: 13px;
+  }
+
+  /* Policy button grid: single column on very narrow screens */
+  .policy-grid-2col {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* Stepper buttons remain 44px */
+  .stepper-btn {
+    width: var(--touch-min) !important;
+    height: var(--touch-min) !important;
+  }
+
+  /* Walkthrough nav buttons wrap */
+  .walkthrough-nav {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  /* BDH two-col comparison stacks on very small screens */
+  #bdh-module .cols-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ── Scrollbar styling (non-blocking) ─────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track { background: #0f0f14; }
+::-webkit-scrollbar-thumb {
+  background: #2a2a3a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: #3a3a5a; }
+
+/* ── Loading shimmer animation ────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { opacity: 0.4; }
+  50%  { opacity: 0.7; }
+  100% { opacity: 0.4; }
+}
+
+.loading-shimmer {
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+/* ── Utility: no horizontal overflow anywhere ─────────────────────────── */
+#app-shell, #sandbox, #guided-walkthrough {
+  max-width: 100vw;
+  overflow-x: hidden;
+}

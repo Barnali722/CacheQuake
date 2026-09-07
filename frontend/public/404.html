@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Memory Under Pressure</title>
+  <script>
+    // GitHub Pages SPA redirect hack:
+    // Store the path in sessionStorage and redirect to index.html
+    // index.html will read it and restore the correct route.
+    var path = window.location.pathname;
+    var search = window.location.search;
+    var hash = window.location.hash;
+    sessionStorage.setItem('redirect', path + search + hash);
+    window.location.replace('/CacheQuake/');
+  </script>
+</head>
+<body>Redirecting…</body>
+</html>
