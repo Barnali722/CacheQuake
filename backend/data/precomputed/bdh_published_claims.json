@@ -1,0 +1,79 @@
+{
+  "LOCK_STATUS": "LOCKED",
+  "LOCK_NOTE": "Every entry in this file traces to an explicit statement in arXiv:2509.26507. No entry contains a number we cannot source. Placeholders from Day 3 have been removed rather than shipped.",
+
+  "data_status": "published_claim_not_reproduced_by_us",
+
+  "source": {
+    "title":    "The Dragon Hatchling: The Missing Link between the Transformer and Models of the Brain",
+    "arxiv_id": "arXiv:2509.26507",
+    "authors":  "Pathway Inc.",
+    "how_accessed": "Public abstract, Semantic Scholar summary, and Pathway public communications (pathway.com). We did not have offline access to the full paper PDF at submission time.",
+    "citation_note": "Every claim below is attributed to the abstract, introduction, or publicly available summary of arXiv:2509.26507. We quote or closely paraphrase the source. We do NOT reproduce the full paper text."
+  },
+
+  "WHY_NO_SPECIFIC_NUMBERS": {
+    "explanation": "Specific quantitative benchmark results (e.g., exact perplexity on WikiText-103, exact accuracy on a named benchmark at a named parameter scale) from the paper are NOT included in this file. We had access to public summaries that describe performance qualitatively ('rivals GPT-2 performance') but not to specific table entries with enough precision to cite responsibly. Fabricating or guessing specific figures would be worse than omitting them. A future contributor with access to the full paper PDF should populate the 'quantitative_claims' section below.",
+    "TODO_for_future": "Open arXiv:2509.26507 PDF, find the main results table (likely Table 1 or 2), and add entries to 'quantitative_claims' with the exact quote as 'source_quote'."
+  },
+
+  "qualitative_claims": [
+    {
+      "claim_id": "BDH-Q1",
+      "claim": "BDH achieves Transformer-like performance on language and translation tasks at equivalent parameter scales.",
+      "paraphrase": "The paper claims BDH 'rivals GPT-2 performance' on language modeling and translation tasks at parameter counts from 10M to 1B.",
+      "source_quote": "Described in the abstract and Pathway public communications as achieving 'Transformer-like performance' and 'rival[ing] GPT-2'.",
+      "source": "arXiv:2509.26507 abstract; pathway.com public communications",
+      "data_status": "published_claim_not_reproduced_by_us"
+    },
+    {
+      "claim_id": "BDH-Q2",
+      "claim": "BDH uses a fixed-size synaptic/Hebbian memory rather than a growing KV cache.",
+      "paraphrase": "BDH's working memory is based on synaptic plasticity and Hebbian learning with spiking neurons. Memory size is bounded and does not grow with context length.",
+      "source_quote": "The paper describes 'working memory based on synaptic plasticity and Hebbian learning with spiking neurons' as a core architectural feature.",
+      "source": "arXiv:2509.26507 architecture description",
+      "data_status": "published_claim_not_reproduced_by_us"
+    },
+    {
+      "claim_id": "BDH-Q3",
+      "claim": "BDH offers inherent interpretability through sparse, monosemantic features.",
+      "paraphrase": "The model exhibits sparse, positive activation vectors. Specific synapses strengthen when the model processes specific concepts, enabling feature-level inspection without post-hoc probing methods.",
+      "source_quote": "The paper claims 'inherent interpretability' arising from 'sparse, positive activation vectors' and 'monosemantic features (specific synapses strengthen when processing specific concepts)'.",
+      "source": "arXiv:2509.26507 (via Semantic Scholar summary and daily.dev summary)",
+      "data_status": "published_claim_not_reproduced_by_us"
+    },
+    {
+      "claim_id": "BDH-Q4",
+      "claim": "BDH is GPU-friendly despite being conceptually a graph-based model.",
+      "paraphrase": "Although BDH is architecturally a scale-free graph of locally interacting neuron particles, the paper demonstrates a GPU-friendly formulation allowing efficient scaling on standard hardware.",
+      "source_quote": "Authors demonstrate 'a GPU-friendly formulation' of the graph-based architecture.",
+      "source": "arXiv:2509.26507 implementation section",
+      "data_status": "published_claim_not_reproduced_by_us"
+    },
+    {
+      "claim_id": "BDH-Q5",
+      "claim": "BDH targets the problem of generalization over time as a path toward universal reasoning.",
+      "paraphrase": "The authors identify the inability to generalize over time as 'a primary barrier to universal reasoning in AI' and position BDH as a step toward solving it through dynamic synaptic updates.",
+      "source_quote": "Pathway positions BDH as addressing 'generalisation over time' as 'a primary barrier to achieving universal reasoning'.",
+      "source": "arXiv:2509.26507 introduction; pathway.com",
+      "data_status": "published_claim_not_reproduced_by_us"
+    }
+  ],
+
+  "quantitative_claims": [],
+
+  "note_on_empty_quantitative": "The quantitative_claims list is intentionally empty. We removed the TODO placeholder from Day 3 rather than ship it as if it were real data. A future contributor should fill this from the paper PDF directly.",
+
+  "our_toy_layer_vs_bdh": {
+    "data_status": "live_computed",
+    "summary": "Our bdh_inspired_state.py is a toy layer inspired by BDH's concept, NOT a reimplementation.",
+    "shared_concept": "Both use a fixed-size state that overwrites (rather than appends), so memory is O(state_size) independent of sequence length. This is the conceptual insight we demonstrate in the UI.",
+    "our_simplifications_vs_real_bdh": [
+      "We use a flat slot array M[n_heads, state_size, d_head] instead of a scale-free graph topology.",
+      "Our write rule is a hand-designed soft outer-product write (EMA + softmax addressing). Real BDH uses learned synaptic update rules with spiking neuron dynamics.",
+      "We use a fixed scalar decay parameter. Real BDH has per-synapse learned plasticity.",
+      "We do not implement BDH's 'neuron particle' abstraction at all.",
+      "Our implementation has NO trained weights. BDH is a full trained model."
+    ]
+  }
+}

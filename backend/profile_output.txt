@@ -1,0 +1,102 @@
+Profiling slow policies...
+
+======================================================================
+Profile for heavy_hitter (seq_len=128)
+======================================================================
+         207267 function calls (175395 primitive calls) in 1.630 seconds
+
+   Ordered by: cumulative time
+   List reduced from 76 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.022    0.022    1.630    1.630 runner.py:107(run_episode)
+16268/332    0.039    0.000    1.122    0.003 module.py:1779(_wrapped_call_impl)
+16268/332    0.063    0.000    1.120    0.003 module.py:1787(_call_impl)
+      332    0.023    0.000    1.116    0.003 toy_transformer.py:226(forward)
+     1328    0.034    0.000    1.019    0.001 toy_transformer.py:104(forward)
+     1328    0.175    0.000    0.700    0.001 attention.py:100(forward)
+     1328    0.176    0.000    0.465    0.000 heavy_hitter.py:92(update)
+     5644    0.011    0.000    0.191    0.000 linear.py:130(forward)
+     3984    0.177    0.000    0.177    0.000 {built-in method torch.matmul}
+     5644    0.172    0.000    0.172    0.000 {built-in method torch._C._nn.linear}
+     1328    0.003    0.000    0.162    0.000 toy_transformer.py:62(forward)
+     1328    0.011    0.000    0.150    0.000 container.py:254(forward)
+     2988    0.008    0.000    0.081    0.000 normalization.py:227(forward)
+     7944    0.078    0.000    0.078    0.000 {built-in method torch.cat}
+     2988    0.011    0.000    0.070    0.000 functional.py:2972(layer_norm)
+     1328    0.053    0.000    0.053    0.000 {method 'mean' of 'torch._C.TensorBase' objects}
+     2988    0.053    0.000    0.053    0.000 {built-in method torch.layer_norm}
+     2652    0.047    0.000    0.047    0.000 {built-in method torch.where}
+     3984    0.011    0.000    0.044    0.000 attention.py:84(_split_heads)
+     7968    0.040    0.000    0.040    0.000 {method 'transpose' of 'torch._C.TensorBase' objects}
+
+
+
+
+======================================================================
+Profile for bdh_inspired_state (seq_len=128)
+======================================================================
+         183927 function calls (152055 primitive calls) in 1.553 seconds
+
+   Ordered by: cumulative time
+   List reduced from 70 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.020    0.020    1.553    1.553 runner.py:107(run_episode)
+16268/332    0.037    0.000    0.949    0.003 module.py:1779(_wrapped_call_impl)
+16268/332    0.059    0.000    0.947    0.003 module.py:1787(_call_impl)
+      332    0.016    0.000    0.944    0.003 toy_transformer.py:226(forward)
+     1328    0.030    0.000    0.870    0.001 toy_transformer.py:104(forward)
+     1328    0.146    0.000    0.583    0.000 attention.py:100(forward)
+     1328    0.528    0.000    0.571    0.000 bdh_inspired_state.py:149(update)
+     5644    0.011    0.000    0.156    0.000 linear.py:130(forward)
+     1328    0.003    0.000    0.146    0.000 toy_transformer.py:62(forward)
+     5644    0.138    0.000    0.138    0.000 {built-in method torch._C._nn.linear}
+     1328    0.010    0.000    0.134    0.000 container.py:254(forward)
+     2656    0.109    0.000    0.109    0.000 {built-in method torch.matmul}
+     2988    0.007    0.000    0.069    0.000 normalization.py:227(forward)
+     2988    0.010    0.000    0.058    0.000 functional.py:2972(layer_norm)
+     2988    0.042    0.000    0.042    0.000 {built-in method torch.layer_norm}
+     3984    0.010    0.000    0.040    0.000 attention.py:84(_split_heads)
+     2652    0.036    0.000    0.036    0.000 {built-in method torch.where}
+     3972    0.035    0.000    0.035    0.000 {built-in method torch.cat}
+     2988    0.031    0.000    0.031    0.000 {built-in method torch.arange}
+     6640    0.028    0.000    0.028    0.000 {method 'transpose' of 'torch._C.TensorBase' objects}
+
+
+
+
+======================================================================
+Profile for sliding_window (seq_len=128)
+======================================================================
+         182647 function calls (150775 primitive calls) in 1.010 seconds
+
+   Ordered by: cumulative time
+   List reduced from 72 to 20 due to restriction <20>
+
+   ncalls  tottime  percall  cumtime  percall filename:lineno(function)
+        1    0.019    0.019    1.010    1.010 runner.py:107(run_episode)
+16268/332    0.033    0.000    0.877    0.003 module.py:1779(_wrapped_call_impl)
+16268/332    0.055    0.000    0.876    0.003 module.py:1787(_call_impl)
+      332    0.015    0.000    0.873    0.003 toy_transformer.py:226(forward)
+     1328    0.028    0.000    0.806    0.001 toy_transformer.py:104(forward)
+     1328    0.138    0.000    0.547    0.000 attention.py:100(forward)
+     5644    0.010    0.000    0.136    0.000 linear.py:130(forward)
+     1328    0.003    0.000    0.130    0.000 toy_transformer.py:62(forward)
+     5644    0.119    0.000    0.119    0.000 {built-in method torch._C._nn.linear}
+     1328    0.009    0.000    0.119    0.000 container.py:254(forward)
+     2656    0.102    0.000    0.102    0.000 {built-in method torch.matmul}
+     1328    0.042    0.000    0.101    0.000 sliding_window.py:93(update)
+     8732    0.081    0.000    0.081    0.000 {built-in method torch.cat}
+     2988    0.007    0.000    0.063    0.000 normalization.py:227(forward)
+     2988    0.009    0.000    0.053    0.000 functional.py:2972(layer_norm)
+     2988    0.039    0.000    0.039    0.000 {built-in method torch.layer_norm}
+     3984    0.010    0.000    0.038    0.000 attention.py:84(_split_heads)
+     2652    0.034    0.000    0.034    0.000 {built-in method torch.where}
+     1328    0.002    0.000    0.032    0.000 functional.py:2176(softmax)
+     1328    0.029    0.000    0.029    0.000 {method 'softmax' of 'torch._C.TensorBase' objects}
+
+
+
+
+Profiling complete.
