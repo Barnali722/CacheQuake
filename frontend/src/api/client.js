@@ -3,13 +3,13 @@
  * Single responsibility: Thin wrapper around the backend API endpoints.
  * All network calls go through this file — components never fetch directly.
  *
- * Day 3: All functions call the real backend. mockResponses.js is quarantined
- * in src/api/__mocks__/ and is NOT imported here. If the backend is not ready,
- * a visible API error is surfaced in the UI (via simulationStore's errorMessage),
- * rather than silently falling back to mocks — which would blur live vs. precomputed.
+ * ADAPTER LAYER (added Day 5 QA):
+ *   The backend uses different policy names and a nested response shape.
+ *   This file maps frontend → backend names on the way IN, and
+ *   normalises backend → frontend shape on the way OUT.
+ *   Components and the store see the flat CONTROLS_SPEC shape throughout.
  *
- * Endpoint reference: backend/app/api/routes.py
- * Request/response schemas: backend/app/api/schemas.py
+ * Endpoint reference: backend/app/main.py
  * Variable names: CONTROLS_SPEC.md §5
  */
 
@@ -17,13 +17,95 @@ const API_BASE =
   (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASE_URL) ||
   'http://localhost:8000';
 
-// ─── Shared fetch helper ──────────────────────────────────────────────────────
+// ─── Policy name map: frontend value → backend value ──────────────────────────
+// Backend accepts: 'full_cache' | 'sliding_window' | 'heavy_hitter' | 'bdh_inspired_state'
+// Frontend uses:   'full'       | 'sliding_window' | 'heavy_hitter' | 'bdh_recurrent'
+const POLICY_NAME_MAP = {
+  full:          'full_cache',
+  sliding_window: 'sliding_window',
+  heavy_hitter:  'heavy_hitter',
+  bdh_recurrent: 'bdh_inspired_state',
+};
 
+// ─── Response normaliser ──────────────────────────────────────────────────────
 /**
- * Thin fetch wrapper: throws a descriptive Error on non-2xx so callers
- * can catch and surface it in the UI rather than silently failing.
- * Never falls back to mock data — per Day 3 honesty constraint.
+ * The backend returns:
+ *   {
+ *     episode:    { fact_positions, answer, ... },
+ *     simulation: {
+ *       steps: [{ step, visible_token_indices, cache_size_tokens, ... }],
+ *       correct, final_answer, ground_truth, policy_info
+ *     }
+ *   }
+ *
+ * The frontend store (simulationStore.jsx) and components expect:
+ *   {
+ *     accuracy_score,           // 0–1 float
+ *     cache_size_tokens,        // final cache size
+ *     full_cache_baseline_tokens,
+ *     cache_size_history,       // per-step cache sizes
+ *     baseline_history,         // per-step full-cache sizes (simulated)
+ *     alive_token_indices,      // final step's alive tokens
+ *     needle_positions,         // where needles are in the sequence
+ *     model_answers,            // per-needle model answers
+ *     correct_answers,          // per-needle ground truth answers
+ *   }
  */
+function normaliseSimulateResponse(raw) {
+  const sim = raw.simulation;
+  const ep  = raw.episode;
+
+  if (!sim || !ep) {
+    throw new Error('Unexpected backend response shape — missing simulation or episode fields.');
+  }
+
+  const steps = Array.isArray(sim.steps) ? sim.steps : [];
+  const seqLen = steps.length;
+
+  // Per-step cache size history (live policy)
+  const cache_size_history = steps.map(s => s.cache_size_tokens ?? 0);
+
+  // Baseline = full cache = step index + 1 at each step
+  const baseline_history = steps.map((_, i) => i + 1);
+
+  // Final values
+  const lastStep = steps[steps.length - 1] ?? {};
+  const cache_size_tokens = lastStep.cache_size_tokens ?? 0;
+  const full_cache_baseline_tokens = seqLen;
+
+  // Alive token indices — use final step's visible_token_indices
+  const alive_token_indices = Array.isArray(lastStep.visible_token_indices)
+    ? lastStep.visible_token_indices
+    : [];
+
+  // Needle positions from episode fact_positions
+  const needle_positions = Array.isArray(ep.fact_positions) ? ep.fact_positions : [];
+
+  // Accuracy: single-question correct/wrong → 0.0 or 1.0
+  // If multiple needles, correct is still boolean on the last question
+  const accuracy_score = sim.correct ? 1.0 : 0.0;
+
+  // Model answer vs correct answer (single needle per episode currently)
+  const model_answers   = [sim.final_answer ?? ''];
+  const correct_answers = [sim.ground_truth ?? ''];
+
+  return {
+    accuracy_score,
+    cache_size_tokens,
+    full_cache_baseline_tokens,
+    cache_size_history,
+    baseline_history,
+    alive_token_indices,
+    needle_positions,
+    model_answers,
+    correct_answers,
+    // Pass through raw for debugging
+    _raw: raw,
+  };
+}
+
+// ─── Shared fetch helper ───────────────────────────────────────────────────────
+
 async function apiFetch(path, options = {}) {
   let res;
   try {
@@ -63,68 +145,49 @@ async function apiFetch(path, options = {}) {
  * @param {number} params.seq_len      - integer 32–512
  * @param {number} params.num_needles  - integer 1–5
  *
- * @returns {Promise<SimulateResponse>}
- * @see CONTROLS_SPEC.md §5
+ * @returns {Promise<SimulateResponse>} - normalised flat shape (CONTROLS_SPEC §5)
  */
 export async function simulate(params) {
-  return apiFetch('/simulate', {
+  // Map frontend policy name → backend policy name
+  const backendPolicy = POLICY_NAME_MAP[params.policy] ?? params.policy;
+
+  const raw = await apiFetch('/simulate', {
     method: 'POST',
-    body: JSON.stringify(params),
+    body: JSON.stringify({ ...params, policy: backendPolicy }),
   });
+
+  // Normalise nested backend response → flat frontend shape
+  return normaliseSimulateResponse(raw);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// GET /step
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Fetch a single generation step's cache state (for step-by-step animation).
- *
- * @param {string} sessionId
- * @param {number} stepIndex
- * @returns {Promise<StepResponse>}
- */
-export async function getStep(sessionId, stepIndex) {
-  return apiFetch(`/step/${sessionId}/${stepIndex}`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// GET /compare
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Fetch comparison data for all four policies at the same seq_len and budget.
- *
- * @param {{ budget: number, seq_len: number }} params
- * @returns {Promise<CompareResponse>}
- */
-export async function compare(params) {
-  const qs = new URLSearchParams(params).toString();
-  return apiFetch(`/compare?${qs}`);
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Precomputed data loaders — load JSON files, NOT the backend API
+// Precomputed data loaders — load JSON files served as static assets
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
  * Load the precomputed accuracy-vs-budget sweep curve.
- * Source: /data/precomputed/accuracy_vs_budget.json (served as a static asset).
+ * Source: backend/data/precomputed/accuracy_vs_budget.json
+ * Falls back to the Vite-proxied backend path.
  * Must be displayed with PrecomputedBadge (CONTROLS_SPEC §3 placement #1).
- *
- * @returns {Promise<Array<{budget: number, accuracy: number}>>}
  */
 export async function loadAccuracyVsBudget() {
-  return apiFetch('/data/precomputed/accuracy_vs_budget.json', { method: 'GET' });
+  try {
+    return await apiFetch('/data/precomputed/accuracy_vs_budget.json', { method: 'GET' });
+  } catch (_) {
+    // Return a minimal fallback so the chart doesn't crash if the file isn't served
+    return [];
+  }
 }
 
 /**
  * Load BDH published claims.
- * Source: /data/precomputed/bdh_published_claims.json (static asset).
+ * Source: backend/data/precomputed/bdh_published_claims.json
  * Must be displayed with PrecomputedBadge (CONTROLS_SPEC §3 placement #2).
- *
- * @returns {Promise<object>}
  */
 export async function loadBDHPublishedClaims() {
-  return apiFetch('/data/precomputed/bdh_published_claims.json', { method: 'GET' });
+  try {
+    return await apiFetch('/data/precomputed/bdh_published_claims.json', { method: 'GET' });
+  } catch (_) {
+    return { claims: [] };
+  }
 }

@@ -1,0 +1,362 @@
+{
+  "full_cache": {
+    "seq32_budget16": {
+      "seq_length": 32,
+      "budget": 16,
+      "description": "Short sequence, half budget",
+      "median_ms": 1410.4527000454254,
+      "all_runs_ms": [
+        1353.1993000069633,
+        1410.4527000454254,
+        1612.347700051032
+      ]
+    },
+    "seq64_budget32": {
+      "seq_length": 64,
+      "budget": 32,
+      "description": "Medium sequence, half budget",
+      "median_ms": 1646.5494000003673,
+      "all_runs_ms": [
+        1498.309499991592,
+        1646.5494000003673,
+        1761.50800002506
+      ]
+    },
+    "seq64_budget48": {
+      "seq_length": 64,
+      "budget": 48,
+      "description": "Medium sequence, 3/4 budget",
+      "median_ms": 1368.28770005377,
+      "all_runs_ms": [
+        1291.48090002127,
+        1368.28770005377,
+        1399.2130000260659
+      ]
+    },
+    "seq128_budget32": {
+      "seq_length": 128,
+      "budget": 32,
+      "description": "Long sequence, quarter budget",
+      "median_ms": 1296.6237000073306,
+      "all_runs_ms": [
+        1274.1428999579512,
+        1296.6237000073306,
+        1330.9568999684416
+      ]
+    },
+    "seq128_budget64": {
+      "seq_length": 128,
+      "budget": 64,
+      "description": "Long sequence, half budget",
+      "median_ms": 1323.6862000194378,
+      "all_runs_ms": [
+        1283.004599972628,
+        1323.6862000194378,
+        1362.323000037577
+      ]
+    },
+    "seq128_budget96": {
+      "seq_length": 128,
+      "budget": 96,
+      "description": "Long sequence, 3/4 budget",
+      "median_ms": 1282.2225999552757,
+      "all_runs_ms": [
+        1280.3580000181682,
+        1282.2225999552757,
+        1551.2133000302128
+      ]
+    },
+    "seq256_budget64": {
+      "seq_length": 256,
+      "budget": 64,
+      "description": "Very long sequence, quarter budget",
+      "median_ms": 1275.4398999968544,
+      "all_runs_ms": [
+        1268.2136000366881,
+        1275.4398999968544,
+        1320.04630001029
+      ]
+    },
+    "seq256_budget128": {
+      "seq_length": 256,
+      "budget": 128,
+      "description": "Very long sequence, half budget",
+      "median_ms": 1307.8649999806657,
+      "all_runs_ms": [
+        1291.5543999988586,
+        1307.8649999806657,
+        1340.816600015387
+      ]
+    }
+  },
+  "sliding_window": {
+    "seq32_budget16": {
+      "seq_length": 32,
+      "budget": 16,
+      "description": "Short sequence, half budget",
+      "median_ms": 1323.0559999938123,
+      "all_runs_ms": [
+        1285.4338999604806,
+        1323.0559999938123,
+        1423.3280000044033
+      ]
+    },
+    "seq64_budget32": {
+      "seq_length": 64,
+      "budget": 32,
+      "description": "Medium sequence, half budget",
+      "median_ms": 1424.915699986741,
+      "all_runs_ms": [
+        1413.079799967818,
+        1424.915699986741,
+        1578.8456000154838
+      ]
+    },
+    "seq64_budget48": {
+      "seq_length": 64,
+      "budget": 48,
+      "description": "Medium sequence, 3/4 budget",
+      "median_ms": 1445.659099961631,
+      "all_runs_ms": [
+        1026.1409999802709,
+        1445.659099961631,
+        1512.206999992486
+      ]
+    },
+    "seq128_budget32": {
+      "seq_length": 128,
+      "budget": 32,
+      "description": "Long sequence, quarter budget",
+      "median_ms": 674.7692999779247,
+      "all_runs_ms": [
+        672.4824999691918,
+        674.7692999779247,
+        844.0770999877714
+      ]
+    },
+    "seq128_budget64": {
+      "seq_length": 128,
+      "budget": 64,
+      "description": "Long sequence, half budget",
+      "median_ms": 1534.2195999692194,
+      "all_runs_ms": [
+        1502.7392000192776,
+        1534.2195999692194,
+        1580.5046000168659
+      ]
+    },
+    "seq128_budget96": {
+      "seq_length": 128,
+      "budget": 96,
+      "description": "Long sequence, 3/4 budget",
+      "median_ms": 1491.2330000079237,
+      "all_runs_ms": [
+        1470.318099949509,
+        1491.2330000079237,
+        1556.9875999935903
+      ]
+    },
+    "seq256_budget64": {
+      "seq_length": 256,
+      "budget": 64,
+      "description": "Very long sequence, quarter budget",
+      "median_ms": 1593.5240000253543,
+      "all_runs_ms": [
+        1483.5135000175796,
+        1593.5240000253543,
+        1693.0369000183418
+      ]
+    },
+    "seq256_budget128": {
+      "seq_length": 256,
+      "budget": 128,
+      "description": "Very long sequence, half budget",
+      "median_ms": 1599.9356000102125,
+      "all_runs_ms": [
+        1550.3566000261344,
+        1599.9356000102125,
+        1608.6610000347719
+      ]
+    }
+  },
+  "heavy_hitter": {
+    "seq32_budget16": {
+      "seq_length": 32,
+      "budget": 16,
+      "description": "Short sequence, half budget",
+      "median_ms": 1584.0462999767624,
+      "all_runs_ms": [
+        1563.36889998056,
+        1584.0462999767624,
+        1616.2635999498889
+      ]
+    },
+    "seq64_budget32": {
+      "seq_length": 64,
+      "budget": 32,
+      "description": "Medium sequence, half budget",
+      "median_ms": 1874.8944000108168,
+      "all_runs_ms": [
+        1772.8031000006013,
+        1874.8944000108168,
+        1952.8077999711968
+      ]
+    },
+    "seq64_budget48": {
+      "seq_length": 64,
+      "budget": 48,
+      "description": "Medium sequence, 3/4 budget",
+      "median_ms": 2038.0727000301704,
+      "all_runs_ms": [
+        1873.124000034295,
+        2038.0727000301704,
+        2156.4862000523135
+      ]
+    },
+    "seq128_budget32": {
+      "seq_length": 128,
+      "budget": 32,
+      "description": "Long sequence, quarter budget",
+      "median_ms": 2005.4568000487052,
+      "all_runs_ms": [
+        1956.471000041347,
+        2005.4568000487052,
+        2028.8978000171483
+      ]
+    },
+    "seq128_budget64": {
+      "seq_length": 128,
+      "budget": 64,
+      "description": "Long sequence, half budget",
+      "median_ms": 1942.0095999957994,
+      "all_runs_ms": [
+        1668.5936999856494,
+        1942.0095999957994,
+        2172.4078999832273
+      ]
+    },
+    "seq128_budget96": {
+      "seq_length": 128,
+      "budget": 96,
+      "description": "Long sequence, 3/4 budget",
+      "median_ms": 829.9675000016578,
+      "all_runs_ms": [
+        792.3170000431128,
+        829.9675000016578,
+        930.6218999554403
+      ]
+    },
+    "seq256_budget64": {
+      "seq_length": 256,
+      "budget": 64,
+      "description": "Very long sequence, quarter budget",
+      "median_ms": 888.4453000500798,
+      "all_runs_ms": [
+        805.5337000405416,
+        888.4453000500798,
+        911.8929000105709
+      ]
+    },
+    "seq256_budget128": {
+      "seq_length": 256,
+      "budget": 128,
+      "description": "Very long sequence, half budget",
+      "median_ms": 867.4589999718592,
+      "all_runs_ms": [
+        771.6097999946214,
+        867.4589999718592,
+        899.7744000516832
+      ]
+    }
+  },
+  "bdh_inspired_state": {
+    "seq32_budget16": {
+      "seq_length": 32,
+      "budget": 16,
+      "description": "Short sequence, half budget",
+      "median_ms": 979.7996000270359,
+      "all_runs_ms": [
+        883.8474999647588,
+        979.7996000270359,
+        1063.5913999867626
+      ]
+    },
+    "seq64_budget32": {
+      "seq_length": 64,
+      "budget": 32,
+      "description": "Medium sequence, half budget",
+      "median_ms": 1994.458900007885,
+      "all_runs_ms": [
+        1317.6679000025615,
+        1994.458900007885,
+        2044.9301000335254
+      ]
+    },
+    "seq64_budget48": {
+      "seq_length": 64,
+      "budget": 48,
+      "description": "Medium sequence, 3/4 budget",
+      "median_ms": 1933.4023999981582,
+      "all_runs_ms": [
+        1915.5263000284322,
+        1933.4023999981582,
+        2027.8833000338636
+      ]
+    },
+    "seq128_budget32": {
+      "seq_length": 128,
+      "budget": 32,
+      "description": "Long sequence, quarter budget",
+      "median_ms": 1913.8279000180773,
+      "all_runs_ms": [
+        1905.5682999896817,
+        1913.8279000180773,
+        1923.1258999789134
+      ]
+    },
+    "seq128_budget64": {
+      "seq_length": 128,
+      "budget": 64,
+      "description": "Long sequence, half budget",
+      "median_ms": 1911.515599989798,
+      "all_runs_ms": [
+        1903.6306999623775,
+        1911.515599989798,
+        1917.3597000190057
+      ]
+    },
+    "seq128_budget96": {
+      "seq_length": 128,
+      "budget": 96,
+      "description": "Long sequence, 3/4 budget",
+      "median_ms": 2016.9353000237606,
+      "all_runs_ms": [
+        1994.6499000070617,
+        2016.9353000237606,
+        2077.82910001697
+      ]
+    },
+    "seq256_budget64": {
+      "seq_length": 256,
+      "budget": 64,
+      "description": "Very long sequence, quarter budget",
+      "median_ms": 2027.1872999728657,
+      "all_runs_ms": [
+        2022.10910001304,
+        2027.1872999728657,
+        2030.4579999647103
+      ]
+    },
+    "seq256_budget128": {
+      "seq_length": 256,
+      "budget": 128,
+      "description": "Very long sequence, half budget",
+      "median_ms": 1191.2509999820031,
+      "all_runs_ms": [
+        901.6697999904864,
+        1191.2509999820031,
+        2007.7910000109114
+      ]
+    }
+  }
+}
