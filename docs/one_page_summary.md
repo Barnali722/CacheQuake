@@ -1,5 +1,7 @@
 # Memory Under Pressure — One-Page Concept Summary
 
+> *Editor's note: this file originally misnamed the BDH paper and its authors. Both have been corrected below to match the verified publication (arXiv:2509.26507). See `research/citations.md` for the full, verified citation.*
+
 **Project:** Interactive KV Caching Explainer · DataForge 2026 · Pathway × Rime Track
 **Audience:** ML practitioners, students, and technically curious non-experts who have heard of "attention" but have not thought carefully about inference-time memory costs.
 
@@ -13,7 +15,7 @@ The research community has developed two broad strategies to contain this cost:
 
 **Eviction and compression** keep only a subset of past tokens — either the most recent (Sliding Window / StreamingLLM), the most attended-to (Heavy Hitter / H2O), or a compressed approximation (KVzip). Each strategy trades exactness for a bounded budget: the cache stops growing, but the model can no longer see everything it has processed. A fact buried in an evicted token is simply gone.
 
-**Architectural replacement** avoids the trade-off by eliminating the growing cache altogether. The BDH (Beyond Dense Hop) architecture, proposed in arXiv:2509.26507, replaces the KV cache with a fixed-size synaptic weight matrix **W**. When a new key–value pair *(k, v)* arrives, it is written into **W** by a local Hebbian update: `W ← W + k·vᵀ`. Reading is a matrix lookup: `v̂ = W·q`. The state never grows — memory is O(1) regardless of sequence length. The failure mode changes too: instead of eviction, BDH forgets via interference — new associations partially overwrite old ones.
+**Architectural replacement** avoids the trade-off by eliminating the growing cache altogether. The BDH ("Dragon Hatchling") architecture, proposed in arXiv:2509.26507 by Kosowski, Uznański, Chorowski, Stamirowska, and Bartoszkiewicz (Pathway), replaces the KV cache with a fixed-size synaptic weight matrix **W**. When a new key–value pair *(k, v)* arrives, it is written into **W** by a local Hebbian update: `W ← W + k·vᵀ`. Reading is a matrix lookup: `v̂ = W·q`. The state never grows — memory is O(1) regardless of sequence length. The failure mode changes too: instead of eviction, BDH forgets via interference — new associations partially overwrite old ones.
 
 The one-sentence claim this project teaches:
 
@@ -59,6 +61,6 @@ The toy simulator does not implement a full language model. It demonstrates the 
 - Vaswani et al., "Attention Is All You Need" (2017) — arXiv:1706.03762
 - Xiao et al., "Efficient Streaming Language Models with Attention Sinks" (StreamingLLM, 2023) — arXiv:2309.17453
 - Zhang et al., "H2O: Heavy-Hitter Oracle" (2023) — arXiv:2306.14048
-- Yıldız et al., "Beyond Dense-Hop" (BDH, 2025) — arXiv:2509.26507
+- Kosowski, Uznański, Chorowski, Stamirowska, Bartoszkiewicz, "The Dragon Hatchling: The Missing Link between the Transformer and Models of the Brain" (BDH, 2025) — arXiv:2509.26507
 
 *Word count: ~680 words*

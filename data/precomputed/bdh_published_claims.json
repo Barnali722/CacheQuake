@@ -1,0 +1,71 @@
+{
+  "_meta": {
+    "label": "PUBLISHED, NOT REPRODUCED BY US",
+    "description": "Claims and figures for BDH / BDH-GPU taken directly from the original paper. Nothing in this file was measured, re-run, or verified by our project's own pipeline. Use only for side-by-side context next to our own precomputed KV-cache results (see accuracy_vs_budget.json), never merge the two into one chart without this disclaimer.",
+    "status": "published_not_reproduced",
+    "reproduced_from_paper": false,
+    "source": {
+      "title": "The Dragon Hatchling: The Missing Link between the Transformer and Models of the Brain",
+      "authors": ["Adrian Kosowski", "Przemysław Uznański", "Jan Chorowski", "Zuzanna Stamirowska", "Michał Bartoszkiewicz"],
+      "affiliation": "Pathway, Palo Alto, USA",
+      "arxiv_id": "2509.26507",
+      "year": 2025,
+      "url": "https://arxiv.org/abs/2509.26507",
+      "code_url": "https://github.com/pathwaycom/bdh"
+    }
+  },
+  "claims": [
+    {
+      "id": "scaling_law_parity",
+      "claim": "BDH-GPU empirically matches GPT2-architecture Transformer performance on language and translation tasks at equal parameter counts.",
+      "parameter_range": "10M to 1B parameters",
+      "conditions": "Same training data as the Transformer baseline it is compared against.",
+      "quantitative_value": null,
+      "quantitative_value_note": "Paper reports this as a qualitative parity/scaling-law claim ('rivals GPT2-architecture Transformer performance'); it does not give a single headline number (e.g. one perplexity delta) that applies across the whole 10M-1B range, so no single number is recorded here to avoid misrepresenting the source.",
+      "source_location": "Abstract / Introduction"
+    },
+    {
+      "id": "training_efficiency",
+      "claim": "BDH-GPU often learns faster per training token than the comparable Transformer baseline.",
+      "quantitative_value": null,
+      "quantitative_value_note": "Reported qualitatively in the paper's summary of results; no single 'X% faster' figure is given in the abstract-level material we sourced.",
+      "source_location": "Results discussion"
+    },
+    {
+      "id": "activation_sparsity",
+      "claim": "BDH activation vectors are sparse and positive by construction (a property of the ReLU-lowrank feed-forward block in BDH-GPU), and the model demonstrates monosemanticity — individual synapses that reliably strengthen when the model processes a specific concept.",
+      "quantitative_value": null,
+      "quantitative_value_note": "Our project's diagram plan uses an illustrative '~5% neuron activation per token' figure for the sparse-activation visual; that specific percentage is our own placeholder for the demo, not a number taken from the paper, and must not be presented as a published result.",
+      "source_location": "Abstract / interpretability sections"
+    },
+    {
+      "id": "parameter_scale_tested",
+      "claim": "Experiments in the paper cover parameter counts from 10M up to 1B; no results are reported above 1B parameters.",
+      "quantitative_value": "10,000,000 - 1,000,000,000",
+      "source_location": "Abstract"
+    },
+    {
+      "id": "no_fixed_context_limit",
+      "claim": "BDH-GPU, as a state-space reformulation, has no fixed context-length limit, unlike a standard fixed-context Transformer.",
+      "quantitative_value": null,
+      "source_location": "Architecture description (BDH vs. BDH-GPU vs. Transformer)"
+    },
+    {
+      "id": "fewer_parameter_matrices",
+      "claim": "BDH-GPU uses fewer parameter matrices than a comparably-sized Transformer.",
+      "quantitative_value": null,
+      "quantitative_value_note": "No specific matrix count or ratio was available in the source material we reviewed; recorded as a qualitative architectural claim only.",
+      "source_location": "Architecture description"
+    },
+    {
+      "id": "brain_correspondence_caveat",
+      "claim": "The brain-correspondence claims (macro-to-micro correspondence between Transformer attention and observed brain attention mechanisms) are presented by the authors as a theoretical/empirical hypothesis, explicitly not a proven biological mechanism.",
+      "quantitative_value": null,
+      "source_location": "Discussion / limitations"
+    }
+  ],
+  "explicitly_not_included": [
+    "Any perplexity, BLEU, or benchmark table values — the source material reviewed for this file did not surface a machine-readable results table; only qualitative 'rivals GPT2' framing was available. Do not backfill these with estimated numbers.",
+    "Sudoku/reasoning-benchmark comparison numbers shown in the project's GitHub README (github.com/pathwaycom/bdh) — those come from a separate follow-up evaluation, not the arXiv paper itself, and would need their own citation if used."
+  ]
+}
