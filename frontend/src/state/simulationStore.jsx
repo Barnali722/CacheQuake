@@ -30,6 +30,9 @@ const EMPTY_RESULT = {
   modelAnswers:            [],
   correctAnswers:          [],
   accuracyScore:           null,
+  episodeText:             '',
+  episodeTokenIds:         [],
+  questionStart:           0,
   cacheSizeHistory:        [],
   baselineHistory:         [],
   needlePositions:         [],
@@ -141,6 +144,9 @@ function reducer(state, action) {
           modelAnswers:            r.model_answers              ?? [],
           correctAnswers:          r.ground_truth_answers       ?? [],
           accuracyScore:           r.accuracy_score             ?? null,
+          episodeText:             r.episode_text               ?? '',
+          episodeTokenIds:         r.episode_token_ids          ?? [],
+          questionStart:           r.question_start             ?? 0,
           cacheSizeHistory:        r.cache_size_history         ?? [],
           baselineHistory:         r.baseline_history           ?? [],
           needlePositions:         r.needle_positions           ?? [],
@@ -178,13 +184,62 @@ export function SimulationProvider({ children }) {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       // ── Try real backend first ──────────────────────────────────────────
-      const response = await simulate({
-        policy:      controls.cachePolicy,
-        budget:      controls.budgetSize,
+      // Map frontend control names to backend API field names
+      const policyMap = {
+        'full': 'full_cache',
+        'sliding_window': 'sliding_window',
+        'heavy_hitter': 'heavy_hitter',
+        'bdh_recurrent': 'bdh_inspired_state',
+      };
+      
+      const reqBody = {
+        policy:      policyMap[controls.cachePolicy] || 'full_cache',
+        budget:      controls.budgetSize,          // Used by heavy_hitter
+        window_size: controls.budgetSize,          // Used by sliding_window
+        state_size:  controls.budgetSize,          // Used by bdh_inspired_state
         seq_len:     controls.sequenceLength,
-        num_needles: controls.needleCount,
-      });
-      dispatch({ type: 'SET_RESULT', payload: response, isMock: false });
+        n_facts:     controls.needleCount,         // Backend expects n_facts, not num_needles
+        question_target: 0,                        // Backend required field
+        seed:        42,                           // Backend required field
+      };
+      
+      const response = await simulate(reqBody);
+      
+      console.log('Backend response:', response);
+      
+      // Transform backend response to frontend format
+      const { episode = {}, simulation = {} } = response || {};
+      const steps = Array.isArray(simulation.steps) ? simulation.steps : [];
+      
+      console.log('Backend response:', response);
+      console.log('Episode:', episode);
+      console.log('Simulation:', simulation);
+      console.log('Final answer:', simulation.final_answer);
+      console.log('Ground truth:', simulation.ground_truth);
+      console.log('Correct:', simulation.correct);
+      
+      // Convert fact_positions object {vault_0: 10, vault_1: 45} to array of positions [10, 45]
+      const needlePositions = episode.fact_positions && typeof episode.fact_positions === 'object'
+        ? Object.values(episode.fact_positions)
+        : [];
+      
+      const transformedResult = {
+        cache_size_tokens: steps.length > 0 ? (steps[steps.length - 1].cache_size_tokens || 0) : 0,
+        full_cache_baseline_tokens: steps.length,
+        alive_token_indices: steps.length > 0 ? (Array.isArray(steps[steps.length - 1].visible_token_indices) ? steps[steps.length - 1].visible_token_indices : []) : [],
+        model_answers: [simulation.final_answer || '?'],
+        ground_truth_answers: [simulation.ground_truth || '?'],
+        accuracy_score: simulation.correct ? 1.0 : 0.0,
+        cache_size_history: Array.isArray(steps) ? steps.map(s => s.cache_size_tokens || 0) : [],
+        baseline_history: Array.isArray(steps) ? steps.map((_, i) => i + 1) : [],
+        needle_positions: needlePositions,
+        // Add episode text and metadata for display
+        episode_text: episode.text || '',
+        episode_token_ids: Array.isArray(episode.token_ids) ? episode.token_ids : [],
+        question_start: episode.question_start || 0,
+      };
+      
+      dispatch({ type: 'SET_RESULT', payload: transformedResult, isMock: false });
 
       // Load precomputed curve (once only)
       if (state.precomputed.accuracyVsBudget.length === 0) {

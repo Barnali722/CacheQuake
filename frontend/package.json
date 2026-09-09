@@ -1,8 +1,8 @@
 {
-  "name": "memory-under-pressure",
+  "name": "cachequake",
   "version": "0.1.0",
   "private": true,
-  "description": "Interactive KV caching explainer — DataForge 2026, Pathway × Rime track",
+  "description": "CacheQuake - Interactive KV caching explainer — DataForge 2026, Pathway × Rime track",
   "type": "module",
   "scripts": {
     "dev":     "vite",

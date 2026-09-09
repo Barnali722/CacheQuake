@@ -1,5 +1,5 @@
 # Response-Time Audit — Day 4
-## Project: Memory Under Pressure · DataForge 2026
+## Project: CacheQuake · DataForge 2026
 
 Audit conducted: frontend-only analysis against documented backend costs.
 Auditor: Agent 3 — Response-Time Agent.

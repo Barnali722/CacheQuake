@@ -1,4 +1,4 @@
-# Memory Under Pressure — One-Page Concept Summary
+# CacheQuake — One-Page Concept Summary
 
 **Project:** Interactive KV Caching Explainer · DataForge 2026 · Pathway × Rime Track
 **Audience:** ML practitioners, students, and technically curious non-experts who have heard of "attention" but have not thought carefully about inference-time memory costs.

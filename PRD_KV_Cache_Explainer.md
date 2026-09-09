@@ -38,7 +38,7 @@ By the end, a learner should be able to:
 ### 4.1 The interactive substrate (must be real, not scripted)
 A small **from-scratch toy decoder-only Transformer** (2–4 layers, tiny vocab, e.g. character-level or a small synthetic "needle" vocabulary) run **live in-browser or via a lightweight backend**, instrumented so every generation step exposes its actual KV cache. This is the "substrate" the rubric requires — the concept must visibly behave before the learner touches anything.
 
-**Core interactive view — "Memory Under Pressure":**
+**Core interactive view — "CacheQuake":**
 - Feed the toy model a long synthetic sequence containing a few "needle" facts (a classic needle-in-haystack setup, small enough to be real-time).
 - Learner controls (few, each mapped to one real variable, per the design standards):
   - **Cache policy**: Full cache / Sliding-window eviction (StreamingLLM-style) / Heavy-hitter eviction (H2O-style) / Fixed-size recurrent state (linear-attention/BDH-style toy layer).
@@ -121,7 +121,7 @@ Roles are primary ownership, not silos — expect cross-over, especially Days 3�
 - **All:** Read primary sources together (BDH paper §attention-as-synapse; H2O; StreamingLLM). Lock the one-sentence claim and audience/prerequisites.
 - **Research lead:** Draft claim + learning objectives; start the ≥3-paper source list with exact citation placement plan.
 - **Simulation engineer:** Decide toy model size/vocab/task (needle-in-haystack synthetic data); scaffold repo, pick stack (e.g. Python/NumPy or PyTorch backend + a thin API, or a fully client-side JS simulator if feasible for speed).
-- **Frontend engineer:** Wireframe the "Memory Under Pressure" view; define the control set and readouts; set up project skeleton.
+- **Frontend engineer:** Wireframe the "CacheQuake" view; define the control set and readouts; set up project skeleton.
 - **Docs/Design lead:** Set up repo structure, README skeleton, license/AI-disclosure tracker, deployment target.
 - **End of day:** written one-sentence claim + wireframe + architecture doc agreed by all four.
 

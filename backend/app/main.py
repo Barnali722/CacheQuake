@@ -17,7 +17,8 @@ CORS:
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 from .model.vocab import vocab_info
@@ -48,6 +49,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------------------------
+# Mount static data directory for precomputed JSON files
+# ---------------------------------------------------------------------------
+
+import os as _os
+_DATA_DIR = _os.path.normpath(_os.path.join(_os.path.dirname(__file__), "..", "data"))
+if _os.path.exists(_DATA_DIR):
+    app.mount("/data", StaticFiles(directory=_DATA_DIR), name="data")
+    print(f"[CacheQuake] Mounted static data directory: {_DATA_DIR}")
 
 # ---------------------------------------------------------------------------
 # Shared model instance (one per process, CPU only)

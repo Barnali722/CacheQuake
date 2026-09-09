@@ -115,7 +115,33 @@ export async function compare(params) {
  * @returns {Promise<Array<{budget: number, accuracy: number}>>}
  */
 export async function loadAccuracyVsBudget() {
-  return apiFetch('/data/precomputed/accuracy_vs_budget.json', { method: 'GET' });
+  const json = await apiFetch('/data/precomputed/accuracy_vs_budget.json', { method: 'GET' });
+  
+  // The JSON has structure: { policies: { sliding_window: { data: [...] }, ... } }
+  // We'll combine all policies' data points into a single array for the chart
+  const allPoints = [];
+  
+  if (json.policies) {
+    // Collect data from all policies
+    for (const [policyName, policyData] of Object.entries(json.policies)) {
+      if (Array.isArray(policyData.data)) {
+        policyData.data.forEach(point => {
+          // Convert "inf" budget to a large number for charting
+          const budget = point.budget === "inf" ? 999 : point.budget;
+          allPoints.push({
+            budget,
+            accuracy: point.accuracy,
+            policy: policyName,
+          });
+        });
+      }
+    }
+  }
+  
+  // Sort by budget for proper line drawing
+  allPoints.sort((a, b) => a.budget - b.budget);
+  
+  return allPoints;
 }
 
 /**

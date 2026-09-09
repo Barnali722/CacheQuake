@@ -207,16 +207,17 @@ function AccuracyPanel({
           </div>
           {correctAnswers.map((correct, i) => {
             const model = modelAnswers[i] ?? '—';
-            const isCorrect = model === correct;
+            // Model predicts first character only, so compare first char of ground truth
+            const isCorrect = model && correct && model === correct[0];
             return (
               <div key={i} style={s.needleRow}>
                 <span style={{ fontSize: '10px', color: '#555', textAlign: 'center' }}>
                   {i + 1}
                 </span>
-                <div style={s.answerChip(isCorrect)} title={model}>
+                <div style={s.answerChip(isCorrect)} title={`Model predicted: ${model}`}>
                   {isCorrect ? '✓ ' : '✗ '}{model}
                 </div>
-                <div style={s.correctChip} title={correct}>
+                <div style={s.correctChip} title={`Full answer: ${correct}`}>
                   {correct}
                 </div>
               </div>

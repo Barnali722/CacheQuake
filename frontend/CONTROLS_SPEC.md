@@ -1,4 +1,4 @@
-# CONTROLS_SPEC.md — "Memory Under Pressure"
+# CONTROLS_SPEC.md — "CacheQuake"
 **Frontend/Interaction Engineer · Day 1 Deliverable · DataForge 2026**
 
 > Every control maps to exactly one backend variable. Every readout is specified as a live value beside a baseline/ground-truth value. No decorative controls exist in this spec.

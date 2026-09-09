@@ -1,11 +1,11 @@
-# wireframe_notes.md — "Memory Under Pressure"
+# wireframe_notes.md — "CacheQuake"
 **Agent 2 — Wireframe Agent · Day 1 · DataForge 2026**
 
 ---
 
 ## Overview
 
-`wireframe.html` is a static, annotated low-fidelity wireframe of the "Memory Under Pressure"
+`wireframe.html` is a static, annotated low-fidelity wireframe of the "CacheQuake"
 interactive view. It requires no build step and no backend connection — open directly in a browser.
 Every region carries an orange annotation bar referencing the corresponding entry in `CONTROLS_SPEC.md`.
 
@@ -36,7 +36,7 @@ The mobile layout stacks: Walkthrough → Controls → Heatmap → Chart → Acc
 ## Region-by-Region Notes
 
 ### 1. Top Bar
-- Title: "Memory Under Pressure"
+- Title: "CacheQuake"
 - One-sentence claim shown as a pill — this is the framing statement the whole
   artifact teaches. Learner sees it before any interaction.
 - No CONTROLS_SPEC entry (static display only).

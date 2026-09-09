@@ -1,4 +1,4 @@
-# Architecture — "Memory Under Pressure"
+# Architecture — "CacheQuake"
 **Topic:** Key–Value Caching, Limitations, and Alternate Approaches · DataForge 2026 (Pathway x Rime)
 
 ---
@@ -31,7 +31,7 @@ Why split this way: the "Interactive substrate & honesty" rubric item (15 pts) i
 ## 2. Folder structure
 
 ```
-memory-under-pressure/
+CacheQuake/
 │
 ├── frontend/                      # Everything the learner interacts with
 │   ├── public/
