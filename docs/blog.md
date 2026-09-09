@@ -1,43 +1,44 @@
-# The Cost of Perfect Memory: Why KV Caches Grow and How BDH Stops It
+# Why Your Chatbot Forgets: Building CacheQuake
 
-*By the CacheQuake Team*
-*DataForge 2026 — Pathway × Rime Track*
+*Team Game of Codes — DataForge 2026, Pathway × Rime track*
 
-## The Linear Growth Problem
+## The bug that isn't a bug
 
-If you've ever used a large language model to summarize a long PDF or write code over a massive repository, you might have noticed the system slowing down or running out of memory. This bottleneck is fundamentally tied to the **Key-Value (KV) Cache**. 
+Every time a large language model generates the next word of a long conversation, it has to look back at everything it has already produced. Recomputing that lookup from scratch at every step would make long conversations unusably slow — so instead, models cache the Key and Value projections from every past token, and reuse them. This is the **KV cache**, and it's one of the quiet, load-bearing mechanisms behind every chatbot you've used.
 
-Every time a Transformer generates a new token, it pays attention to every token it has previously processed. To avoid recomputing these states from scratch, the model saves the "Key" and "Value" tensors for each token in a cache. 
+The catch: that cache doesn't shrink. It grows by one entry per token, per layer, per attention head, for as long as the model keeps generating. Ask it to hold a whole codebase or a long document in context, and the memory bill scales linearly with how much you've asked it to remember. This isn't a bug to be patched — it's a direct, structural consequence of how attention caching works. The only real options are: pay the growing cost, decide what to throw away, or change the architecture so there's nothing to throw away in the first place.
 
-The problem? **This cache grows linearly with sequence length.** Every new token adds one row to the cache, per attention head, per layer. For a 100,000-token document, the memory footprint of the KV cache can easily exceed the size of the model weights themselves. This is the cost of "perfect memory."
+We built **CacheQuake** to make that trade-off something you can *see*, not just read about.
 
-## The Band-Aid: Eviction and Compression
+## What we built
 
-To prevent the KV cache from consuming all available VRAM, researchers have devised various ways to bound its size. 
+CacheQuake runs a small, real, from-scratch decoder-only Transformer — four layers, 64-dimensional, character-level vocabulary — behind a FastAPI backend. You feed it a synthetic "haystack" sequence with a few hidden facts buried inside, pick one of four cache strategies, and watch what happens:
 
-1. **Sliding Window (e.g., StreamingLLM)**: This policy acts like a goldfish, only keeping the most recent *N* tokens in the cache. It strictly bounds memory, but anything outside the window is forgotten entirely. 
-2. **Heavy Hitter (e.g., H2O)**: This policy notices that some tokens (like punctuation or crucial entities) receive disproportionately high attention scores. It selectively evicts the "least attended" tokens. 
+- **Full Cache** — keep everything. The baseline. Memory grows in a straight line.
+- **Sliding Window** — keep only a recent window, plus a handful of "sink" tokens at the very start (an approach inspired by StreamingLLM). Memory is bounded, but old context is gone.
+- **Heavy Hitter** — keep only the tokens that have accumulated the most attention "weight" over time (inspired by H2O). Memory is bounded differently — by importance rather than recency.
+- **BDH-Inspired State** — instead of keeping *any* individual tokens, maintain a small, fixed-size memory matrix that gets overwritten, not appended to, on every step. Memory never grows at all, no matter how long the sequence gets.
 
-While these methods bound memory, they still fundamentally rely on a tabular, row-by-row storage mechanism. They trade exactness for a bounded budget. If a crucial fact is buried in an evicted token, the model simply cannot retrieve it.
+That fourth policy is inspired by a real, recent architecture — **BDH ("Dragon Hatchling")**, from a September 2025 paper by researchers at Pathway (arXiv:2509.26507) — which proposes replacing the KV cache entirely with a synaptic, Hebbian-updating memory state. We want to be very clear about scope here: our `bdh_inspired_state.py` policy borrows BDH's *conceptual idea* — a fixed-size state that overwrites instead of appends — using a hand-designed update rule we wrote ourselves. It is not a reproduction of BDH's actual scale-free neuron-particle graph, its spiking dynamics, or its learned synaptic weights. We say this in the code, in our docs, and we're saying it here again on purpose, because the difference between "inspired by" and "reproducing" a paper's architecture matters, and it's easy to blur under hackathon time pressure.
 
-## The Architectural Cure: BDH Recurrent
+## What we found (with appropriate caveats)
 
-What if we didn't store rows of past tokens at all? 
+We precomputed one accuracy-vs-memory-budget sweep across all four policies, using our own lightly-trained toy model — 80 episodes per policy, per budget, all clearly labeled as "our precomputed result," never mixed in with the BDH paper's published claims. Some of what showed up:
 
-The **BDH (Beyond Dense-Hop)** architecture, proposed in late 2025 (Yıldız et al., arXiv:2509.26507), takes a radically different approach. Instead of a growing table, BDH replaces the KV cache with a **fixed-size synaptic weight matrix**.
+- At small budgets, every eviction policy struggles — there just isn't room to keep the fact that matters.
+- At mid-range budgets, our **Heavy Hitter** policy actually **beat** the unbounded Full Cache baseline. Selectively discarding irrelevant filler tokens seems to help this tiny model focus, even though it has strictly less information available.
+- Our BDH-inspired policy's accuracy stayed roughly flat regardless of state size — consistent with the idea that "bigger fixed state" doesn't behave like "bigger token budget." It forgets by interference, not by eviction, and that's a genuinely different failure mode.
 
-When a new key-value pair arrives, it isn't appended to a list. Instead, it is written directly into this state matrix via a local Hebbian update. Reading from the memory becomes a simple matrix-vector multiplication.
+We want to underline: this is a 4-layer toy model on a synthetic task, evaluated once, at one configuration. It is not a benchmark claim about any real cache policy at production scale, and we don't present it as one anywhere in the project.
 
-Because the matrix size is fixed, the memory footprint is **$O(1)$** with respect to sequence length. The cache never grows. 
+## What we were careful about
 
-### Forgetting via Interference
+The rubric for this track cares a lot about not blurring "the concept truly behaves live" with "here's a number we made up or found in a table." So we drew a hard structural line: anything computed live during your interaction comes straight from a running attention forward pass. Anything precomputed lives in a separate `data/precomputed/` folder, physically apart from the live code, and is labeled everywhere it shows up in the UI. Anything from the BDH paper itself is labeled as a **published claim, not reproduced by us** — and where we didn't have verified access to the paper's exact benchmark numbers, we left that field empty rather than guess. An empty field with an honest explanation felt more defensible to us than a plausible-looking number we couldn't stand behind.
 
-If the cache never grows, how does it handle an infinite stream of new information? Rather than strictly *evicting* old tokens, BDH *overwrites* itself. New associations partially write over older ones, leading to "forgetting via interference" rather than deletion. 
+## What's still missing
 
-In our **CacheQuake** simulator, you can see this live. If you shrink the state budget for the BDH policy, you'll see retrieval accuracy drop, not because the token fell out of a window, but because the finite matrix capacity was exceeded by overlapping associations.
+We're not going to pretend this is finished. `POST /step`, a planned real-time single-token streaming endpoint, still returns "not implemented." Our comprehension-check questions are placeholder text — we ran out of time to write real ones before submission. And one of our own planning documents originally misnamed the BDH paper (an old working title, wrong author list) — a mistake we caught and corrected while writing this documentation, and a good reminder that "we cited a paper" and "we double-checked the citation" are not the same step.
 
-## Try It Yourself
+## Why this topic, and why now
 
-We built [CacheQuake](https://github.com/CacheQuake) to let you feel this mechanics directly. You can drag a slider to watch the Full Cache memory footprint climb linearly, and then switch to Sliding Window, Heavy Hitter, or BDH to see how each policy trades off memory against retrieval accuracy. 
-
-It's one thing to read a math equation about linear growth—it's another to watch the memory chart spike in real-time. Give it a spin, and see for yourself what happens when perfect memory meets a finite budget!
+Every KV-cache strategy we simulated, and the architectural alternative we simulated a shadow of, are all things researchers are actively arguing about *right now* — StreamingLLM, H2O, SnapKV, Quest, and KVzip all appeared within the last three years, and BDH is a matter of months old at the time we built this. That's the frontier this project tries to explain: not a settled textbook fact, but a live design space, made concrete enough to poke at with your own hands.
