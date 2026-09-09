@@ -7,7 +7,7 @@ export default defineConfig(({ mode }) => ({
 
   // GitHub Pages serves the app at /CacheQuake/ (repo name).
   // Set base to '/' when using a custom domain or Netlify/Vercel.
-  base: mode === 'production' ? '/CacheQuake/' : '/',
+  base: '/',
 
   optimizeDeps: {
     entries: ['src/index.jsx'],
