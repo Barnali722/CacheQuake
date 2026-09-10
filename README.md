@@ -2,7 +2,7 @@
 # CacheQuake
 
 🚀 Live Demo
-Frontend: https://cachequake.vercel.app/
+Frontend:https://cachequake.vercel.app/
 Backend API: https://cachequake-backend.onrender.com
 
 **CacheQuake** is an interactive explainer on why LLMs' KV cache grows without bound, what eviction and compression trade away, and how Pathway's BDH replaces the cache with a fixed-size synaptic state instead. Built for the DataForge 2026 IITKGP Hackathon (Pathway x Rime track).
